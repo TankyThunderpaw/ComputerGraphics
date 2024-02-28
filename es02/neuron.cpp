@@ -298,6 +298,7 @@ bool disegnaNav = true;
 int intermittenza = 5;
 bool pause = false;
 bool stopFlow = false;
+bool mainMenu = true;
 bool frameSkipperBlueN = false;
 float sogliaScia = 1.0;
 int sequenza_bomba = 0;
@@ -311,6 +312,7 @@ bool hoverL = false;
 bool hoverPA = false;
 bool hoverQG = false;
 bool hoverP[PERKS];
+bool hoverMM[8];
 // int costsFirePower[FIREPOWER] = { 1, 2, 3, 4 };
 int costsFirePower[FIREPOWER] = { 45, 105, 166, 214 };
 // int costsHealth[HEALTH] = { 1, 1, 1, 1, 2, 3 };
@@ -366,6 +368,13 @@ GLuint VAO_BMB, VBO_BMB, VBO_BMBC;
 vec2 bombaPos;
 
 //strutture per grafica
+std::vector<vec2> disegnaMainMenu;
+std::vector<vec4> coloreMainMenu;
+GLuint VAO_MM, VBO_MM, VBO_MMC;
+std::vector<vec2> disegnaMainMenuL;
+std::vector<vec4> coloreMainMenuL;
+GLuint VAO_MML, VBO_MML, VBO_MMLC;
+std::vector<Text> textMainMenu;
 std::vector<vec2> disegnaStatsBar;
 std::vector<vec4> coloreStatsBar;
 GLuint VAO_SB, VBO_SB, VBO_SBC;
@@ -668,6 +677,57 @@ void vitaPersa()
 		updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
 		updateText(&textMenu.at(16), intToCharBuff(game.lives));
 	}
+}
+
+void disegnaContornoRettangolo(std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec4 colour, float x1, float x2, float y1, float y2)
+{
+	resPts->push_back({ x1, y1 });
+	resPts->push_back({ x2, y1 });
+	resPts->push_back({ x2, y1 });
+	resPts->push_back({ x2, y2 });
+	resPts->push_back({ x2, y2 });
+	resPts->push_back({ x1, y2 });
+	resPts->push_back({ x1, y2 });
+	resPts->push_back({ x1, y1 });
+	for (int i = 0; i < 8; i++)
+		resCol->push_back(colour);
+}
+
+void initMainMenu()
+{
+	textMainMenu.push_back(createText2(width * 440 / 1000, height * 9 / 10, false, 10.0, true, "NEURON", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 482 / 1000, height * 750 / 1000, false, 5.0, true, "PLAY", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 270 / 1000, height * 598 / 1000, false, 5.0, true, "ACHIEVEMENTS", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 605 / 1000, height * 598 / 1000, false, 5.0, true, "HIGH SCORES", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 214 / 1000, height * 446 / 1000, false, 5.0, true, "INSTRUCTIONS", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 660 / 1000, height * 446 / 1000, false, 5.0, true, "WALKTHROUGH", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 280 / 1000, height * 294 / 1000, false, 5.0, true, "MORE GAMES", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 623 / 1000, height * 294 / 1000, false, 5.0, true, "DOWNLOAD", { 1.0, 1.0, 1.0, 0.7 }));
+	textMainMenu.push_back(createText2(width * 460 / 1000, height * 142 / 1000, false, 5.0, true, "CREDITS", { 1.0, 1.0, 1.0, 0.7 }));
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.008, 0.059, 0.2, 1.0 }, 0, width, 0, height);
+	float x1 = width * 390 / 1000;
+	float x2 = width * 610 / 1000;
+	float y1 = height * 690 / 1000;
+	float y2 = height * 810 / 1000;
+	float xInc1 = 210;
+	float xInc2 = 280;
+	float yInc1 = 110;
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1, x2, y1, y2);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1, x2, y1, y2);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 - xInc1, x2 - xInc1, y1 - yInc1, y2 - yInc1);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 - xInc1, x2 - xInc1, y1 - yInc1, y2 - yInc1);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 + xInc1, x2 + xInc1, y1 - yInc1, y2 - yInc1);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 + xInc1, x2 + xInc1, y1 - yInc1, y2 - yInc1);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 - xInc2, x2 - xInc2, y1 - yInc1*2, y2 - yInc1*2);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 - xInc2, x2 - xInc2, y1 - yInc1 * 2, y2 - yInc1 * 2);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 + xInc2, x2 + xInc2, y1 - yInc1*2, y2 - yInc1*2);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 + xInc2, x2 + xInc2, y1 - yInc1 * 2, y2 - yInc1 * 2);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 - xInc1, x2 - xInc1, y1 - yInc1*3, y2 - yInc1*3);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 - xInc1, x2 - xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1 + xInc1, x2 + xInc1, y1 - yInc1*3, y2 - yInc1*3);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1 + xInc1, x2 + xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+	disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 0.7, 0.7 }, x1, x2, y1 - yInc1 * 4, y2 - yInc1 * 4);
+	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1, x2, y1 - yInc1 * 4, y2 - yInc1 * 4);
 }
 
 void gameOverInit()
@@ -2046,9 +2106,9 @@ void reset()
 	textSpeed = stringToCharBuff(ss.str());
 
 	game.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
-	game.cdmultiplier = 1;
 	oldTimeSinceStart = 0;
 	deltaPause = 0;
+	game.cdmultiplier = 1;
 	for (int i = 0; i < PERKS; i++)
 		hoverP[i] = false;
 	for (int i = 0; i < PERKS; i++)
@@ -2187,275 +2247,282 @@ void checkStage() // cambio stage se nemici_per_stage locale raggiunto
 
 void update(int a)
 {
-	if (gameOver) // hardcode indecente
+	if (mainMenu)
 	{
-		if (!waitingBounties && !postmortem3)
-		{
-			bool trovato = false;
-			for (int i = 0; i < proiettili.size() && !trovato; i++)
-			{
-				if (proiettili.at(i).type == 1)
-					trovato = true;
-			}
-			if (!trovato)
-			{
-				waitingBounties = true;
-				textPunteggio.clear();
-				int finalScore = game.score + game.points;
-				snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
-				textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
-				textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
-				textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
 
-				// codice necessario solo se esiste un bottone rapido per testare le scritte di Game Over
-				scalaGameOver = 100.0;
-				fattoreRiduzione = 0.01;
-				progressiveTranspGO = 0.0;
-				progressiveTranspPunteggio = 0.01;
-				textGameOver = createText2(width * 78 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
-			}
-		}
-		else
+	}
+	else
+	{
+		if (gameOver) // hardcode indecente
 		{
-			if (textGameOver.scale > 30)
+			if (!waitingBounties && !postmortem3)
 			{
-				//std::cout << "\ntextGameOver.scale: " << textGameOver.scale << ";    fattoreRiduzione: " << fattoreRiduzione << ";";
-				textGameOver.pos.x += 15; //caso preciso e centrato: pos.x+=11   e fattore riduz*=100
-				scalaGameOver -= fattoreRiduzione * 100;
-				if (progressiveTranspGO < 1.0 && textGameOver.scale < 98)
-					progressiveTranspGO += 0.04;
-				fattoreRiduzione *= 1.13;
-				textGameOver.scale -= fattoreRiduzione;
-				updateText2(&textGameOver, { 1.0, 1.0, 1.0, progressiveTranspGO }, textGameOver.scale, stringToCharBuff("GAME OVER"));
+				bool trovato = false;
+				for (int i = 0; i < proiettili.size() && !trovato; i++)
+				{
+					if (proiettili.at(i).type == 1)
+						trovato = true;
+				}
+				if (!trovato)
+				{
+					waitingBounties = true;
+					textPunteggio.clear();
+					int finalScore = game.score + game.points;
+					snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
+					textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+					textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
+					textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+
+					// codice necessario solo se esiste un bottone rapido per testare le scritte di Game Over
+					scalaGameOver = 100.0;
+					fattoreRiduzione = 0.01;
+					progressiveTranspGO = 0.0;
+					progressiveTranspPunteggio = 0.01;
+					textGameOver = createText2(width * 78 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
+				}
 			}
 			else
 			{
-				if (progressiveTranspPunteggio < 1.0)
+				if (textGameOver.scale > 30)
 				{
-					progressiveTranspPunteggio += 0.05;
-					updateText2(&textPunteggio.at(0), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(0).scale, buffer);
-					updateText2(&textPunteggio.at(1), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(1).scale, stringToCharBuff("PLAY AGAIN"));
-					updateText2(&textPunteggio.at(2), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(2).scale, stringToCharBuff("QUIT GAME"));
-					disegnaBottoniGO.clear();
-					coloreBottoniGO.clear();
-					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 0.8, 0.0, progressiveTranspPunteggio / 2 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
-					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.8, 0.0, 0.0, progressiveTranspPunteggio / 2 }, width * 760 / 1000, width * 550 / 1000, height * 150 / 1000, height * 280 / 1000);
-					coloreContornoBGO.clear();
-					for (int i = 0; i < 16; i++)
-						coloreContornoBGO.push_back({ 1.0, 1.0, 1.0, progressiveTranspPunteggio });
+					//std::cout << "\ntextGameOver.scale: " << textGameOver.scale << ";    fattoreRiduzione: " << fattoreRiduzione << ";";
+					textGameOver.pos.x += 15; //caso preciso e centrato: pos.x+=11   e fattore riduz*=100
+					scalaGameOver -= fattoreRiduzione * 100;
+					if (progressiveTranspGO < 1.0 && textGameOver.scale < 98)
+						progressiveTranspGO += 0.04;
+					fattoreRiduzione *= 1.13;
+					textGameOver.scale -= fattoreRiduzione;
+					updateText2(&textGameOver, { 1.0, 1.0, 1.0, progressiveTranspGO }, textGameOver.scale, stringToCharBuff("GAME OVER"));
 				}
 				else
-					stopFlow = true;
-			}
-		}
-	}
-	if (!pause)
-	{
-		if (recharging)
-		{
-			int delta = glutGet(GLUT_ELAPSED_TIME) - cooldownStart;
-			if (delta > (COOLDOWN * game.cdmultiplier))
-				recharging = false;
-		}
-		if (mouseLeft_down)
-			fuoco();
-
-		if (sequenza_bomba > 0)
-		{
-			disegnaBomba.clear();
-			coloreBomba.clear();
-			disegnaCirconferenza(&disegnaBomba, &coloreBomba, { 1.0, 1.0, 1.0, 1.0 }, bombaPos, windowDiagonal * sequenza_bomba / numFramesBomba, 120, 0, 0, false);
-			sequenza_bomba++;
-			if (sequenza_bomba == numFramesBomba)
-				sequenza_bomba = 0;
-		}
-
-		// check collisioni
-		if (!postmortem1 && !postmortem3)
-		{
-			checkCollisioni();
-			int i_max = nemici.size();
-			for (int i = 0; i < i_max; i++)
-			{
-				if (nemici.at(i).flag == true)
 				{
-					distruggiNemico(i);
-					i_max--;
-					i--;
+					if (progressiveTranspPunteggio < 1.0)
+					{
+						progressiveTranspPunteggio += 0.05;
+						updateText2(&textPunteggio.at(0), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(0).scale, buffer);
+						updateText2(&textPunteggio.at(1), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(1).scale, stringToCharBuff("PLAY AGAIN"));
+						updateText2(&textPunteggio.at(2), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(2).scale, stringToCharBuff("QUIT GAME"));
+						disegnaBottoniGO.clear();
+						coloreBottoniGO.clear();
+						disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 0.8, 0.0, progressiveTranspPunteggio / 2 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+						disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.8, 0.0, 0.0, progressiveTranspPunteggio / 2 }, width * 760 / 1000, width * 550 / 1000, height * 150 / 1000, height * 280 / 1000);
+						coloreContornoBGO.clear();
+						for (int i = 0; i < 16; i++)
+							coloreContornoBGO.push_back({ 1.0, 1.0, 1.0, progressiveTranspPunteggio });
+					}
+					else
+						stopFlow = true;
 				}
 			}
-			i_max = proiettili.size();
+		}
+		if (!pause)
+		{
+			if (recharging)
+			{
+				int delta = glutGet(GLUT_ELAPSED_TIME) - cooldownStart;
+				if (delta > (COOLDOWN * game.cdmultiplier))
+					recharging = false;
+			}
+			if (mouseLeft_down)
+				fuoco();
+
+			if (sequenza_bomba > 0)
+			{
+				disegnaBomba.clear();
+				coloreBomba.clear();
+				disegnaCirconferenza(&disegnaBomba, &coloreBomba, { 1.0, 1.0, 1.0, 1.0 }, bombaPos, windowDiagonal * sequenza_bomba / numFramesBomba, 120, 0, 0, false);
+				sequenza_bomba++;
+				if (sequenza_bomba == numFramesBomba)
+					sequenza_bomba = 0;
+			}
+
+			// check collisioni
+			if (!postmortem1 && !postmortem3)
+			{
+				checkCollisioni();
+				int i_max = nemici.size();
+				for (int i = 0; i < i_max; i++)
+				{
+					if (nemici.at(i).flag == true)
+					{
+						distruggiNemico(i);
+						i_max--;
+						i--;
+					}
+				}
+				i_max = proiettili.size();
+				for (int i = 0; i < i_max; i++)
+				{
+					if (proiettili.at(i).type == 0 && proiettili.at(i).flag == 1)
+					{
+						proiettili.erase(proiettili.begin() + i);
+						i_max--;
+						i--;
+					}
+					// ? v
+					else if (proiettili.at(i).type == 2 && proiettili.at(i).flag == 1)
+					{
+						bool trovato = false;
+						for (int j = 0; j < proiettili_verdi.size() && !trovato; j++)
+							if (proiettili_verdi.at(j) == proiettili.at(i).id)
+							{
+								trovato = true;
+								proiettili_verdi.erase(proiettili_verdi.begin() + j);
+							}
+						proiettili.erase(proiettili.begin() + i);
+						i_max--;
+						i--;
+					}
+				}
+			}
+
+			if (!gameOver && !stopFlow)
+				checkStage();
+
+			updateNemici();
+			updateScie();
+			updateResidui();
+			updateProiettili();
+			int i_max = proiettili.size();
 			for (int i = 0; i < i_max; i++)
 			{
-				if (proiettili.at(i).type == 0 && proiettili.at(i).flag == 1)
+				Proiettile p = proiettili.at(i);
+				if (p.type == 0 && p.flag > 0)
 				{
+					update_dodged(p.id);
 					proiettili.erase(proiettili.begin() + i);
 					i_max--;
 					i--;
 				}
-				// ? v
-				else if (proiettili.at(i).type == 2 && proiettili.at(i).flag == 1)
+			}
+
+			if (game.health < game.maxHealth && game.health > 0)
+			{
+				game.health += 0.03;
+
+				updateHealthBar(game.health);
+			}
+
+			if (postmortem1)
+			{
+				disegnaNav = false;
+				postmortem_c++;
+				if (postmortem_c == INVULNERABILITY * 2 / 5)
 				{
-					bool trovato = false;
-					for (int j = 0; j < proiettili_verdi.size() && !trovato; j++)
-						if (proiettili_verdi.at(j) == proiettili.at(i).id)
-						{
-							trovato = true;
-							proiettili_verdi.erase(proiettili_verdi.begin() + j);
-						}
-					proiettili.erase(proiettili.begin() + i);
-					i_max--;
-					i--;
+					postmortem1 = false;
+					postmortem2 = true;
+					player.pos = { width / 2, height / 2 };
+					disegnaNav = true;
 				}
 			}
-		}
-
-		if (!gameOver && !stopFlow)
-			checkStage();
-
-		updateNemici();
-		updateScie();
-		updateResidui();
-		updateProiettili();
-		int i_max = proiettili.size();
-		for (int i = 0; i < i_max; i++)
-		{
-			Proiettile p = proiettili.at(i);
-			if (p.type == 0 && p.flag > 0)
+			if (postmortem2)
 			{
-				update_dodged(p.id);
-				proiettili.erase(proiettili.begin() + i);
-				i_max--;
-				i--;
+				game.health = game.maxHealth;
+				updateHealthBar(game.health);
+				postmortem_c++;
+				if ((postmortem_c % intermittenza) == 0)
+					disegnaNav = !disegnaNav;
+				if (postmortem_c == INVULNERABILITY)
+				{
+					postmortem2 = false;
+					disegnaNav = true;
+					postmortem_c = 0;
+				}
 			}
-		}
 
-		if (game.health < game.maxHealth && game.health > 0)
-		{
-			game.health += 0.03;
-
-			updateHealthBar(game.health);
-		}
-
-		if (postmortem1)
-		{
-			disegnaNav = false;
-			postmortem_c++;
-			if (postmortem_c == INVULNERABILITY * 2 / 5)
+			//aggiornamento velocità
+			if (pressing_down)
 			{
-				postmortem1 = false;
-				postmortem2 = true;
-				player.pos = { width / 2, height / 2 };
-				disegnaNav = true;
+				if (player.vel4.dw > -max_vel)
+					player.vel4.dw = player.vel4.dw - vel_inc;
+				if (player.vel4.dw < -max_vel)
+					player.vel4.dw = -max_vel;
+				//player.pos.y -= 10.0;
 			}
-		}
-		if (postmortem2)
-		{
-			game.health = game.maxHealth;
-			updateHealthBar(game.health);
-			postmortem_c++;
-			if ((postmortem_c % intermittenza) == 0)
-				disegnaNav = !disegnaNav;
-			if (postmortem_c == INVULNERABILITY)
+			else {
+				if (player.vel4.dw < 0.0)
+					player.vel4.dw = player.vel4.dw + vel_dec;
+				if (player.vel4.dw > 0.0)
+					player.vel4.dw = 0.0;
+			}
+			if (pressing_up)
 			{
-				postmortem2 = false;
-				disegnaNav = true;
-				postmortem_c = 0;
+				if (player.vel4.up < max_vel)
+					player.vel4.up = player.vel4.up + vel_inc;
+				if (player.vel4.up > max_vel)
+					player.vel4.up = max_vel;
+				//player.pos.y += 10.0;
 			}
-		}
+			else {
+				if (player.vel4.up > 0.0)
+					player.vel4.up = player.vel4.up - vel_dec;
+				if (player.vel4.up < 0.0)
+					player.vel4.up = 0.0;
+			}
+			if (pressing_left)
+			{
+				if (player.vel4.sx > -max_vel)
+					player.vel4.sx = player.vel4.sx - vel_inc;
+				if (player.vel4.sx < -max_vel)
+					player.vel4.sx = -max_vel;
+				//player.pos.x -= 10.0;
+			}
+			else {
+				if (player.vel4.sx < 0.0)
+					player.vel4.sx = player.vel4.sx + vel_dec;
+				if (player.vel4.sx > 0.0)
+					player.vel4.sx = 0.0;
+			}
+			if (pressing_right)
+			{
+				if (player.vel4.dx < max_vel)
+					player.vel4.dx = player.vel4.dx + vel_inc;
+				if (player.vel4.dx > max_vel)
+					player.vel4.dx = max_vel;
+				//player.pos.x += 10.0;
+			}
+			else
+			{
+				if (player.vel4.dx > 0.0)
+					player.vel4.dx = player.vel4.dx - vel_dec;
+				if (player.vel4.dx < 0.0)
+					player.vel4.dx = 0.0;
+			}
 
-		//aggiornamento velocità
-		if (pressing_down)
-		{
-			if (player.vel4.dw > -max_vel)
-				player.vel4.dw = player.vel4.dw - vel_inc;
-			if (player.vel4.dw < -max_vel)
-				player.vel4.dw = -max_vel;
-			//player.pos.y -= 10.0;
-		}
-		else {
-			if (player.vel4.dw < 0.0)
-				player.vel4.dw = player.vel4.dw + vel_dec;
-			if (player.vel4.dw > 0.0)
-				player.vel4.dw = 0.0;
-		}
-		if (pressing_up)
-		{
-			if (player.vel4.up < max_vel)
-				player.vel4.up = player.vel4.up + vel_inc;
-			if (player.vel4.up > max_vel)
-				player.vel4.up = max_vel;
-			//player.pos.y += 10.0;
-		}
-		else {
-			if (player.vel4.up > 0.0)
-				player.vel4.up = player.vel4.up - vel_dec;
-			if (player.vel4.up < 0.0)
-				player.vel4.up = 0.0;
-		}
-		if (pressing_left)
-		{
-			if (player.vel4.sx > -max_vel)
-				player.vel4.sx = player.vel4.sx - vel_inc;
-			if (player.vel4.sx < -max_vel)
-				player.vel4.sx = -max_vel;
-			//player.pos.x -= 10.0;
-		}
-		else {
-			if (player.vel4.sx < 0.0)
-				player.vel4.sx = player.vel4.sx + vel_dec;
-			if (player.vel4.sx > 0.0)
-				player.vel4.sx = 0.0;
-		}
-		if (pressing_right)
-		{
-			if (player.vel4.dx < max_vel)
-				player.vel4.dx = player.vel4.dx + vel_inc;
-			if (player.vel4.dx > max_vel)
-				player.vel4.dx = max_vel;
-			//player.pos.x += 10.0;
-		}
-		else
-		{
-			if (player.vel4.dx > 0.0)
-				player.vel4.dx = player.vel4.dx - vel_dec;
-			if (player.vel4.dx < 0.0)
-				player.vel4.dx = 0.0;
-		}
+			//aggiornamento posizione
+			player.pos.x = player.pos.x + player.vel4.sx + player.vel4.dx;
+			player.pos.y = player.pos.y + player.vel4.up + player.vel4.dw;
 
-		//aggiornamento posizione
-		player.pos.x = player.pos.x + player.vel4.sx + player.vel4.dx;
-		player.pos.y = player.pos.y + player.vel4.up + player.vel4.dw;
+			if (player.pos.x < padding.x)
+			{
+				player.pos.x = padding.x;
+				player.vel4.dx = player.vel4.dx - (player.vel4.sx * 0.8);
+				player.vel4.sx = 0.0f;
+			}
+			if (player.pos.x > width - padding.x)
+			{
+				player.pos.x = width - padding.x;
+				player.vel4.sx = player.vel4.sx - (player.vel4.dx * 0.8);
+				player.vel4.dx = 0.0f;
+			}
+			if (player.pos.y < padding.y)
+			{
+				player.pos.y = padding.y;
+				player.vel4.up = player.vel4.up - (player.vel4.dw * 0.8);
+				player.vel4.dw = 0.0f;
+			}
+			if (player.pos.y > height - padding.y)
+			{
+				player.pos.y = height - padding.y;
+				player.vel4.dw = player.vel4.dw - (player.vel4.up * 0.8);
+				player.vel4.up = 0.0f;
+			}
+			if (!stopFlow)
+				player.angle = getAngle(player.pos, mouseInput) * 0.0174533;
 
-		if (player.pos.x < padding.x)
-		{
-			player.pos.x = padding.x;
-			player.vel4.dx = player.vel4.dx - (player.vel4.sx * 0.8);
-			player.vel4.sx = 0.0f;
 		}
-		if (player.pos.x > width - padding.x)
-		{
-			player.pos.x = width - padding.x;
-			player.vel4.sx = player.vel4.sx - (player.vel4.dx * 0.8);
-			player.vel4.dx = 0.0f;
-		}
-		if (player.pos.y < padding.y)
-		{
-			player.pos.y = padding.y;
-			player.vel4.up = player.vel4.up - (player.vel4.dw * 0.8);
-			player.vel4.dw = 0.0f;
-		}
-		if (player.pos.y > height - padding.y)
-		{
-			player.pos.y = height - padding.y;
-			player.vel4.dw = player.vel4.dw - (player.vel4.up * 0.8);
-			player.vel4.up = 0.0f;
-		}
-		if (!stopFlow)
-			player.angle = getAngle(player.pos, mouseInput) * 0.0174533;
-
+		c++;
 	}
-	c++;
 	glutTimerFunc(1, update, 0);
 
 }
@@ -3030,301 +3097,319 @@ void fuoco()
 
 void mouseClickEvent(int button, int state, int x, int y)
 {
-	if (stopFlow)
+	if (mainMenu)
 	{
-		if (hoverPA)
-		{
-			reset();
-		}
-		else if (hoverQG)
-		{
-			exit(0);
-		}
+		if (hoverMM[0])
+			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+			{
+				hoverMM[0] = false;
+				mainMenu = false;
+				reset();
+			}
 	}
-	else if (!postmortem1 && !postmortem3) {
-		mouseInput.x = x;
-		mouseInput.y = height - y;
-		if (!pause)
+	else
+	{
+		if (stopFlow)
 		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-				mouseLeft_down = false;
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-				mouseLeft_down = true;
-		}
-		else if (hoverFP)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
-				game.points >= costsFirePower[game.fp] && game.fp < FIREPOWER)
+			if (hoverPA)
 			{
-				state = GLUT_UP;
-				consumePoints(costsFirePower[game.fp]);
-				game.fp += 1;
-				updateText(&textMenu.at(5), intToCharBuff(game.fp + 1));
-				if (game.fp < FIREPOWER) {
+				reset();
+			}
+			else if (hoverQG)
+			{
+				exit(0);
+			}
+		}
+		else if (!postmortem1 && !postmortem3) {
+			mouseInput.x = x;
+			mouseInput.y = height - y;
+			if (!pause)
+			{
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+					mouseLeft_down = false;
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+					mouseLeft_down = true;
+			}
+			else if (hoverFP)
+			{
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
+					game.points >= costsFirePower[game.fp] && game.fp < FIREPOWER)
+				{
+					state = GLUT_UP;
+					consumePoints(costsFirePower[game.fp]);
+					game.fp += 1;
+					updateText(&textMenu.at(5), intToCharBuff(game.fp + 1));
+					if (game.fp < FIREPOWER) {
+						std::stringstream ss;
+						ss << "UPGRADE FIREPOWER (COST " << costsFirePower[game.fp] << ")";
+						textFirePower = stringToCharBuff(ss.str());
+					}
+					else
+						textFirePower = stringToCharBuff("FIREPOWER FULLY UPGRADED");
+				}
+			}
+			else if (hoverH)
+			{
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
+					game.points >= costsHealth[game.h] && game.h < HEALTH)
+				{
+					state = GLUT_UP;
+					consumePoints(costsHealth[game.h]);
+					game.h += 1;
+					game.health += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
+					game.maxHealth += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
+					updateHealthBar(game.health);
+					updateText(&textMenu.at(7), intToCharBuff(game.h + 1));
+					if (game.h < HEALTH) {
+						std::stringstream ss;
+						ss << "UPGRADE HEALTH (COST " << costsHealth[game.h] << ")";
+						textHealth = stringToCharBuff(ss.str());
+					}
+					else
+						textHealth = stringToCharBuff("HEALTH FULLY UPGRADED");
+				}
+			}
+			else if (hoverS)
+			{
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
+					game.points >= costsSpeed[game.s] && game.s < SPEED)
+				{
+					state = GLUT_UP;
+					consumePoints(costsSpeed[game.s]);
+					game.s += 1;
+					vel_inc += 0.12;
+					vel_dec += 0.1;
+					max_vel += 2.0;
+					updateText(&textMenu.at(9), intToCharBuff(game.s + 1));
+					if (game.s < SPEED) {
+						std::stringstream ss;
+						ss << "UPGRADE SPEED (COST " << costsSpeed[game.s] << ")";
+						textSpeed = stringToCharBuff(ss.str());
+					}
+					else
+						textSpeed = stringToCharBuff("SPEED FULLY UPGRADED");
+				}
+			}
+			else if (hoverL)
+			{
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && game.points >= costLife)
+				{
+					game.points -= costLife;
+					game.lives++;
+					updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
+					updateText(&textMenu.at(16), intToCharBuff(game.lives));
 					std::stringstream ss;
-					ss << "UPGRADE FIREPOWER (COST " << costsFirePower[game.fp] << ")";
-					textFirePower = stringToCharBuff(ss.str());
+					ss << "PURCHASE LIFE (COST " << costLife << ")";
+					textLife = stringToCharBuff(ss.str());
 				}
-				else
-					textFirePower = stringToCharBuff("FIREPOWER FULLY UPGRADED");
 			}
-		}
-		else if (hoverH)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
-				game.points >= costsHealth[game.h] && game.h < HEALTH)
+			else if (hoverB)
 			{
-				state = GLUT_UP;
-				consumePoints(costsHealth[game.h]);
-				game.h += 1;
-				game.health += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
-				game.maxHealth += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
-				updateHealthBar(game.health);
-				updateText(&textMenu.at(7), intToCharBuff(game.h + 1));
-				if (game.h < HEALTH) {
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && game.points >= costBomb)
+				{
+					game.points -= costBomb;
+					game.bombs++;
+					updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
+					updateText(&textMenu.at(14), intToCharBuff(game.bombs));
 					std::stringstream ss;
-					ss << "UPGRADE HEALTH (COST " << costsHealth[game.h] << ")";
-					textHealth = stringToCharBuff(ss.str());
+					ss << "PURCHASE BOMB (COST " << costBomb << ")";
+					textBomb = stringToCharBuff(ss.str());
 				}
-				else
-					textHealth = stringToCharBuff("HEALTH FULLY UPGRADED");
 			}
-		}
-		else if (hoverS)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
-				game.points >= costsSpeed[game.s] && game.s < SPEED)
+			else if (hoverP[0])
 			{
-				state = GLUT_UP;
-				consumePoints(costsSpeed[game.s]);
-				game.s += 1;
-				vel_inc += 0.12;
-				vel_dec += 0.1;
-				max_vel += 2.0;
-				updateText(&textMenu.at(9), intToCharBuff(game.s + 1));
-				if (game.s < SPEED) {
-					std::stringstream ss;
-					ss << "UPGRADE SPEED (COST " << costsSpeed[game.s] << ")";
-					textSpeed = stringToCharBuff(ss.str());
-				}
-				else
-					textSpeed = stringToCharBuff("SPEED FULLY UPGRADED");
-			}
-		}
-		else if (hoverL)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && game.points >= costLife)
-			{
-				game.points -= costLife;
-				game.lives++;
-				updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
-				updateText(&textMenu.at(16), intToCharBuff(game.lives));
-				std::stringstream ss;
-				ss << "PURCHASE LIFE (COST " << costLife << ")";
-				textLife = stringToCharBuff(ss.str());
-			}
-		}
-		else if (hoverB)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && game.points >= costBomb)
-			{
-				game.points -= costBomb;
-				game.bombs++;
-				updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
-				updateText(&textMenu.at(14), intToCharBuff(game.bombs));
-				std::stringstream ss;
-				ss << "PURCHASE BOMB (COST " << costBomb << ")";
-				textBomb = stringToCharBuff(ss.str());
-			}
-		}
-		else if (hoverP[0])
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-			{
-				if (!game.perksActive[0] && game.numActivePerks < game.maxPerks)
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 				{
-					game.perksActive[0] = true;
-					player.scale /= 3;
-					game.numActivePerks++;
-				}
-				else if (game.perksActive[0])
-				{
-					game.perksActive[0] = false;
-					player.scale *= 3;
-					game.numActivePerks--;
-				}
+					if (!game.perksActive[0] && game.numActivePerks < game.maxPerks)
+					{
+						game.perksActive[0] = true;
+						player.scale /= 3;
+						game.numActivePerks++;
+					}
+					else if (game.perksActive[0])
+					{
+						game.perksActive[0] = false;
+						player.scale *= 3;
+						game.numActivePerks--;
+					}
 
+				}
 			}
-		}
-		else if (hoverP[1])
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+			else if (hoverP[1])
 			{
-				if (!game.perksActive[1] && game.numActivePerks < game.maxPerks)
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 				{
-					game.perksActive[1] = true;
-					game.numActivePerks++;
-				}
-				else if (game.perksActive[1])
-				{
-					game.perksActive[1] = false;
-					game.numActivePerks--;
-				}
+					if (!game.perksActive[1] && game.numActivePerks < game.maxPerks)
+					{
+						game.perksActive[1] = true;
+						game.numActivePerks++;
+					}
+					else if (game.perksActive[1])
+					{
+						game.perksActive[1] = false;
+						game.numActivePerks--;
+					}
 
+				}
 			}
-		}
-		else if (hoverP[2])
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+			else if (hoverP[2])
 			{
-				if (!game.perksActive[2] && game.numActivePerks < game.maxPerks)
+				if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 				{
-					game.perksActive[2] = true;
-					game.numActivePerks++;
-					game.cdmultiplier = 0.5;
-				}
-				else if (game.perksActive[2])
-				{
-					game.perksActive[2] = false;
-					game.numActivePerks--;
-					game.cdmultiplier = 1;
-				}
+					if (!game.perksActive[2] && game.numActivePerks < game.maxPerks)
+					{
+						game.perksActive[2] = true;
+						game.numActivePerks++;
+						game.cdmultiplier = 0.5;
+					}
+					else if (game.perksActive[2])
+					{
+						game.perksActive[2] = false;
+						game.numActivePerks--;
+						game.cdmultiplier = 1;
+					}
 
+				}
 			}
+			// if hoverP[3] hoverP[4] hoverP[5]
 		}
-		// if hoverP[3] hoverP[4] hoverP[5]
 	}
 }
 
 void keyboardPressedEvent(unsigned char key, int x, int y)
 {
-	if (!stopFlow)
+	if (mainMenu)
 	{
-		switch (key)
-		{
-		case 'a':
-			if (!postmortem1 && !postmortem3)
-				pressing_left = true;
-			break;
-		case 'd':
-			if (!postmortem1 && !postmortem3)
-				pressing_right = true;
-			break;
-		case 'w':
-			if (!postmortem1 && !postmortem3)
-				pressing_up = true;
-			break;
-		case 's':
-			if (!postmortem1 && !postmortem3)
-				pressing_down = true;
-			break;
-		case 'e':
-			reset();
-			break;
-		case 'r': // solo per finalità di test
-			if (gameOver)
-			{
-				gameOver = false;
-			}
-			else
-			{
-				scalaGameOver = 100.0;
-				fattoreRiduzione = 0.01;
-				progressiveTranspGO = 0.0;
-				progressiveTranspPunteggio = 0.01;
-				textGameOver = createText2(width * 60 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
-				textPunteggio.clear();
-				snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
-				textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
-				gameOver = true;
-			}
-			break;
-		case 't': // solo per finalità di test
-			playSoundEffect(3, "bomb");
-			bombaPos = player.pos;
-			sequenza_bomba = 1;
-			break;
-		case 'y': // solo per finalità di test
-			if (game.fp < FIREPOWER)
-			{
-				game.fp++;
-				updateText(&textMenu.at(5), intToCharBuff(game.fp + 1));
-				if (game.fp < FIREPOWER) {
-					std::stringstream ss;
-					ss << "UPGRADE FIREPOWER (COST " << costsFirePower[game.fp] << ")";
-					textFirePower = stringToCharBuff(ss.str());
-				}
-				else
-					textFirePower = stringToCharBuff("FIREPOWER FULLY UPGRADED");
-			}
-			break;
-		case 'u': // solo per finalità di test
-			if (game.h < HEALTH)
-			{
-				game.h++;
-				game.health += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
-				game.maxHealth += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
-				updateHealthBar(game.health);
-				updateText(&textMenu.at(7), intToCharBuff(game.h + 1));
-				if (game.h < HEALTH) {
-					std::stringstream ss;
-					ss << "UPGRADE HEALTH (COST " << costsHealth[game.h] << ")";
-					textHealth = stringToCharBuff(ss.str());
-				}
-				else
-					textHealth = stringToCharBuff("HEALTH FULLY UPGRADED");
-			}
-			break;
-		case 'i': // solo per finalità di test
-			if (game.h < HEALTH)
-			{
-				game.s++;
-				updateText(&textMenu.at(9), intToCharBuff(game.s + 1));
-				if (game.s < SPEED) {
-					std::stringstream ss;
-					ss << "UPGRADE SPEED (COST " << costsSpeed[game.s] << ")";
-					textSpeed = stringToCharBuff(ss.str());
-				}
-				else
-					textSpeed = stringToCharBuff("SPEED FULLY UPGRADED");
-			}
-			break;
-		case 'o': // solo per finalità di test
-			game.unlockedPerks++;
-			unlockPerk();
-			break;
-		case 'p':
-			if (!postmortem3)
-			{
-				if (!pause)
-					pauseStartTimestamp = glutGet(GLUT_ELAPSED_TIME);
-				else
-				{
-					deltaPause += glutGet(GLUT_ELAPSED_TIME) - pauseStartTimestamp;
-				}
-				pause = !pause;
-			}
-			break;
-		case '+':
-			game.maxPerks++;
-			break;
-		case ' ':
-			if (!postmortem1 && !postmortem3 && !pause)
-				if (game.bombs > 0 && sequenza_bomba == 0)
-				{
-					playSoundEffect(3, "bomb");
-					game.bombs--;
-					updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
-					updateText(&textMenu.at(14), intToCharBuff(game.bombs));
-					bombaPos = player.pos;
-					sequenza_bomba = 1;
-				}
-			break;
-		case 27:
+		if (key == 27)
 			exit(0);
-			break;
-		default:
-			break;
+	}
+	else
+	{
+		if (!stopFlow)
+		{
+			switch (key)
+			{
+			case 'a':
+				if (!postmortem1 && !postmortem3)
+					pressing_left = true;
+				break;
+			case 'd':
+				if (!postmortem1 && !postmortem3)
+					pressing_right = true;
+				break;
+			case 'w':
+				if (!postmortem1 && !postmortem3)
+					pressing_up = true;
+				break;
+			case 's':
+				if (!postmortem1 && !postmortem3)
+					pressing_down = true;
+				break;
+			case 'e':
+				reset();
+				break;
+			case 'r': // solo per finalità di test
+				if (gameOver)
+				{
+					gameOver = false;
+				}
+				else
+				{
+					scalaGameOver = 100.0;
+					fattoreRiduzione = 0.01;
+					progressiveTranspGO = 0.0;
+					progressiveTranspPunteggio = 0.01;
+					textGameOver = createText2(width * 60 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
+					textPunteggio.clear();
+					snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
+					textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+					gameOver = true;
+				}
+				break;
+			case 't': // solo per finalità di test
+				playSoundEffect(3, "bomb");
+				bombaPos = player.pos;
+				sequenza_bomba = 1;
+				break;
+			case 'y': // solo per finalità di test
+				if (game.fp < FIREPOWER)
+				{
+					game.fp++;
+					updateText(&textMenu.at(5), intToCharBuff(game.fp + 1));
+					if (game.fp < FIREPOWER) {
+						std::stringstream ss;
+						ss << "UPGRADE FIREPOWER (COST " << costsFirePower[game.fp] << ")";
+						textFirePower = stringToCharBuff(ss.str());
+					}
+					else
+						textFirePower = stringToCharBuff("FIREPOWER FULLY UPGRADED");
+				}
+				break;
+			case 'u': // solo per finalità di test
+				if (game.h < HEALTH)
+				{
+					game.h++;
+					game.health += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
+					game.maxHealth += (MAX_HEALTH - INIT_HEALTH) / HEALTH;
+					updateHealthBar(game.health);
+					updateText(&textMenu.at(7), intToCharBuff(game.h + 1));
+					if (game.h < HEALTH) {
+						std::stringstream ss;
+						ss << "UPGRADE HEALTH (COST " << costsHealth[game.h] << ")";
+						textHealth = stringToCharBuff(ss.str());
+					}
+					else
+						textHealth = stringToCharBuff("HEALTH FULLY UPGRADED");
+				}
+				break;
+			case 'i': // solo per finalità di test
+				if (game.h < HEALTH)
+				{
+					game.s++;
+					updateText(&textMenu.at(9), intToCharBuff(game.s + 1));
+					if (game.s < SPEED) {
+						std::stringstream ss;
+						ss << "UPGRADE SPEED (COST " << costsSpeed[game.s] << ")";
+						textSpeed = stringToCharBuff(ss.str());
+					}
+					else
+						textSpeed = stringToCharBuff("SPEED FULLY UPGRADED");
+				}
+				break;
+			case 'o': // solo per finalità di test
+				game.unlockedPerks++;
+				unlockPerk();
+				break;
+			case 'p':
+				if (!postmortem3)
+				{
+					if (!pause)
+						pauseStartTimestamp = glutGet(GLUT_ELAPSED_TIME);
+					else
+					{
+						deltaPause += glutGet(GLUT_ELAPSED_TIME) - pauseStartTimestamp;
+					}
+					pause = !pause;
+				}
+				break;
+			case '+':
+				game.maxPerks++;
+				break;
+			case ' ':
+				if (!postmortem1 && !postmortem3 && !pause)
+					if (game.bombs > 0 && sequenza_bomba == 0)
+					{
+						playSoundEffect(3, "bomb");
+						game.bombs--;
+						updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
+						updateText(&textMenu.at(14), intToCharBuff(game.bombs));
+						bombaPos = player.pos;
+						sequenza_bomba = 1;
+					}
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }
@@ -3358,239 +3443,321 @@ void mouseDragEvent(int x, int y)
 
 void mousePassiveMotionEvent(int x, int y)
 {
-	if (!postmortem1)
+	if (mainMenu)
 	{
 		mouseInput.x = x;
 		mouseInput.y = height - y;
-		if (pause)
+		float x1 = width * 390 / 1000;
+		float x2 = width * 610 / 1000;
+		float y1 = height * 690 / 1000;
+		float y2 = height * 810 / 1000;
+		float xInc1 = 210;
+		float xInc2 = 280;
+		float yInc1 = 110;
+		if (mouseInput.x > x1 && mouseInput.x < x2 && mouseInput.y > y1 && mouseInput.y < y2)
 		{
-			//upgrades
-			int x1 = width * 440 / 1000;
-			int x2 = width * 458 / 1000;
-			int y1 = height * 682 / 1000;
-			int y2 = height * 714 / 1000;
-			//triangles
-			int x1_2 = width * 442 / 1000;
-			int x2_2 = width * 456 / 1000;
-			int x3_2 = (x1 + x2) / 2;
-			int y1_2 = height * 688 / 1000;
-			int y2_2 = height * 709 / 1000;
-			//boxes
-			int x1_3 = width * 170 / 1000;
-			int x2_3 = width * 250 / 1000;
-			int y1_3 = height * 355 / 1000;
-			int y2_3 = height * 485 / 1000;
-			//lucchetto
-			int x1_4 = width * 185 / 1000;
-			int x2_4 = width * 235 / 1000;
-			int y1_4 = height * 375 / 1000;
-			int y2_4 = height * 422 / 1000;
-			//buys
-			int x1_5 = width * 790 / 1000;
-			int x2_5 = width * 808 / 1000;
-			int y1_5 = height * 682 / 1000;
-			int y2_5 = height * 714 / 1000;
-			//crosses
-			int x1_6 = width * 792 / 1000;
-			int x2_6 = width * 807 / 1000;
-			int y1_6 = height * 695 / 1000;
-			int y2_6 = height * 702 / 1000;
-			int x1_7 = width * 797 / 1000;
-			int x2_7 = width * 802 / 1000;
-			int y1_7 = height * 685 / 1000;
-			int y2_7 = height * 712 / 1000;
-
-
-			if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
-				&& mouseInput.y > height * 682 / 1000 && mouseInput.y < height * 714 / 1000)
-			{
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1, y2);
-				disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2, y2_2);
-				updateText(&textMenu.at(11), textFirePower);
-				hoverFP = true;
-			}
-			else if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
-				&& mouseInput.y >(height * 682 / 1000) - 30 && mouseInput.y < (height * 714 / 1000) - 30)
-			{
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1 - 30, y2 - 30);
-				disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2 - 30, y2_2 - 30);
-				updateText(&textMenu.at(11), textHealth);
-				hoverH = true;
-			}
-			else if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
-				&& mouseInput.y >(height * 682 / 1000) - 60 && mouseInput.y < (height * 714 / 1000) - 60)
-			{
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1 - 60, y2 - 60);
-				disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2 - 60, y2_2 - 60);
-				updateText(&textMenu.at(11), textSpeed);
-				hoverS = true;
-			}
-			else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
-				&& mouseInput.y > height * 682 / 1000 && mouseInput.y < height * 714 / 1000)
-			{
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5, y2_5);
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6, y2_6);
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7, y2_7);
-				updateText(&textMenu.at(11), textBomb);
-				hoverB = true;
-			}
-			else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
-				&& mouseInput.y >(height * 682 / 1000) - 30 && mouseInput.y < (height * 714 / 1000) - 30)
-			{
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5 - 30, y2_5 - 30);
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6 - 30, y2_6 - 30);
-				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7 - 30, y2_7 - 30);
-				updateText(&textMenu.at(11), textLife);
-				hoverL = true;
-			}
-			else if (mouseInput.x > width * 170 / 1000 && mouseInput.x < width * 250 / 1000
-				&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
-			{
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 1)
-					updateText(&textMenu.at(11), stringToCharBuff("REDUCED SIZE"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[0] = true;
-			}
-			else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
-				&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
-			{
-				x1_3 += 130;
-				x2_3 += 130;
-				x1_4 += 130;
-				x2_4 += 130;
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 2)
-					updateText(&textMenu.at(11), stringToCharBuff("BOUNCING BULLETS"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[1] = true;
-			}
-			else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
-				&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
-			{
-				x1_3 += 260;
-				x2_3 += 260;
-				x1_4 += 260;
-				x2_4 += 260;
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 3)
-					updateText(&textMenu.at(11), stringToCharBuff("DOUBLE TIME"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[2] = true;
-			}
-			else if (mouseInput.x > (width * 170 / 1000) && mouseInput.x < (width * 250 / 1000)
-				&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
-			{
-				y1_3 -= 120;
-				y2_3 -= 120;
-				y1_4 -= 120;
-				y2_4 -= 120;
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 4)
-					updateText(&textMenu.at(11), stringToCharBuff("PENETRATING BULLETS"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[3] = true;
-			}
-			else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
-				&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
-			{
-				x1_3 += 130;
-				x2_3 += 130;
-				x1_4 += 130;
-				x2_4 += 130;
-				y1_3 -= 120;
-				y2_3 -= 120;
-				y1_4 -= 120;
-				y2_4 -= 120;
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 5)
-					updateText(&textMenu.at(11), stringToCharBuff("EXPLOSIVE BULLETS"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[4] = true;
-			}
-			else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
-				&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
-			{
-				x1_3 += 260;
-				x2_3 += 260;
-				x1_4 += 260;
-				x2_4 += 260;
-				y1_3 -= 120;
-				y2_3 -= 120;
-				y1_4 -= 120;
-				y2_4 -= 120;
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
-				//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
-				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
-				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
-				if (game.unlockedPerks >= 6)
-					updateText(&textMenu.at(11), stringToCharBuff("TIME ALTER"));
-				else
-					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-				hoverP[5] = true;
-			}
-			else
-			{
-				disegnaHover.clear();
-				coloreHover.clear();
-				updateText(&textMenu.at(11), stringToCharBuff(" "));
-				hoverFP = false;
-				hoverH = false;
-				hoverS = false;
-				hoverB = false;
-				hoverL = false;
-				for (int i = 0; i < PERKS; i++)
-					hoverP[i] = false;
-			}
+			textMainMenu.push_back(createText2(width * 482 / 1000, height * 750 / 1000, false, 5.0, true, "PLAY", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 1.0 }, x1, x2, y1, y2);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 1.0 }, x1, x2, y1, y2);
+			hoverMM[0] = true;
 		}
-		else if (gameOver && stopFlow) // Hover bottoni GAMEOVER
+		else if (mouseInput.x > x1 - xInc1 && mouseInput.x < x2 - xInc1 && mouseInput.y > y1 - yInc1 && mouseInput.y < y2 - yInc1)
 		{
-			if (mouseInput.x > width * 240 / 1000 && mouseInput.x < width * 450 / 1000
-				&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+			textMainMenu.push_back(createText2(width * 270 / 1000, height * 598 / 1000, false, 5.0, true, "ACHIEVEMENTS", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 - xInc1, x2 - xInc1, y1 - yInc1, y2 - yInc1);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 - xInc1, x2 - xInc1, y1 - yInc1, y2 - yInc1);
+			hoverMM[1] = true;
+		}
+		else if (mouseInput.x > x1 + xInc1 && mouseInput.x < x2 + xInc1 && mouseInput.y > y1 - yInc1 && mouseInput.y < y2 - yInc1)
+		{
+			textMainMenu.push_back(createText2(width * 605 / 1000, height * 598 / 1000, false, 5.0, true, "HIGH SCORES", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 + xInc1, x2 + xInc1, y1 - yInc1, y2 - yInc1);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 + xInc1, x2 + xInc1, y1 - yInc1, y2 - yInc1);
+			hoverMM[2] = true;
+		}
+		else if (mouseInput.x > x1 - xInc2 && mouseInput.x < x2 - xInc2 && mouseInput.y > y1 - yInc1*2 && mouseInput.y < y2 - yInc1*2)
+		{
+			textMainMenu.push_back(createText2(width * 214 / 1000, height * 446 / 1000, false, 5.0, true, "INSTRUCTIONS", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 - xInc2, x2 - xInc2, y1 - yInc1*2, y2 - yInc1*2);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 - xInc2, x2 - xInc2, y1 - yInc1*2, y2 - yInc1*2);
+			hoverMM[3] = true;
+		}
+		else if (mouseInput.x > x1 + xInc2 && mouseInput.x < x2 + xInc2 && mouseInput.y > y1 - yInc1 * 2 && mouseInput.y < y2 - yInc1 * 2)
+		{
+			textMainMenu.push_back(createText2(width * 660 / 1000, height * 446 / 1000, false, 5.0, true, "WALKTHROUGH", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 + xInc2, x2 + xInc2, y1 - yInc1 * 2, y2 - yInc1 * 2);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 + xInc2, x2 + xInc2, y1 - yInc1 * 2, y2 - yInc1 * 2);
+			hoverMM[4] = true;
+		}
+		else if (mouseInput.x > x1 - xInc1 && mouseInput.x < x2 - xInc1 && mouseInput.y > y1 - yInc1 * 3 && mouseInput.y < y2 - yInc1 * 3)
+		{
+			textMainMenu.push_back(createText2(width * 280 / 1000, height * 294 / 1000, false, 5.0, true, "MORE GAMES", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 - xInc1, x2 - xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 - xInc1, x2 - xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+			hoverMM[5] = true;
+		}
+		else if (mouseInput.x > x1 + xInc1 && mouseInput.x < x2 + xInc1 && mouseInput.y > y1 - yInc1 * 3 && mouseInput.y < y2 - yInc1 * 3)
+		{
+			textMainMenu.push_back(createText2(width * 623 / 1000, height * 294 / 1000, false, 5.0, true, "DOWNLOAD", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 0.1 }, x1 + xInc1, x2 + xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.1 }, x1 + xInc1, x2 + xInc1, y1 - yInc1 * 3, y2 - yInc1 * 3);
+			hoverMM[6] = true;
+		}
+		else if (mouseInput.x > x1 && mouseInput.x < x2 && mouseInput.y > y1 - yInc1 * 4 && mouseInput.y < y2 - yInc1 * 4)
+		{
+			textMainMenu.push_back(createText2(width * 460 / 1000, height * 142 / 1000, false, 5.0, true, "CREDITS", { 1.0, 1.0, 1.0, 0.1 }));
+			disegnaRettangolo(&disegnaMainMenu, &coloreMainMenu, { 0.0, 0.0, 1.0, 1.0 }, x1, x2, y1 - yInc1 * 4, y2 - yInc1 * 4);
+			disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 1.0 }, x1, x2, y1 - yInc1 * 4, y2 - yInc1 * 4);
+			hoverMM[7] = true;
+		}
+		else
+		{
+			textMainMenu.clear();
+			disegnaMainMenu.clear();
+			coloreMainMenu.clear();
+			disegnaMainMenuL.clear();
+			coloreMainMenuL.clear();
+			initMainMenu();
+			for (int i = 0; i < 8; i++)
+				hoverMM[i] = false;
+		}
+	}
+	else
+	{
+		if (!postmortem1)
+		{
+			mouseInput.x = x;
+			mouseInput.y = height - y;
+			if (pause)
 			{
-				disegnaBottoniGO.clear();
-				coloreBottoniGO.clear();
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 1.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
-				hoverPA = true;
+				//upgrades
+				int x1 = width * 440 / 1000;
+				int x2 = width * 458 / 1000;
+				int y1 = height * 682 / 1000;
+				int y2 = height * 714 / 1000;
+				//triangles
+				int x1_2 = width * 442 / 1000;
+				int x2_2 = width * 456 / 1000;
+				int x3_2 = (x1 + x2) / 2;
+				int y1_2 = height * 688 / 1000;
+				int y2_2 = height * 709 / 1000;
+				//boxes
+				int x1_3 = width * 170 / 1000;
+				int x2_3 = width * 250 / 1000;
+				int y1_3 = height * 355 / 1000;
+				int y2_3 = height * 485 / 1000;
+				//lucchetto
+				int x1_4 = width * 185 / 1000;
+				int x2_4 = width * 235 / 1000;
+				int y1_4 = height * 375 / 1000;
+				int y2_4 = height * 422 / 1000;
+				//buys
+				int x1_5 = width * 790 / 1000;
+				int x2_5 = width * 808 / 1000;
+				int y1_5 = height * 682 / 1000;
+				int y2_5 = height * 714 / 1000;
+				//crosses
+				int x1_6 = width * 792 / 1000;
+				int x2_6 = width * 807 / 1000;
+				int y1_6 = height * 695 / 1000;
+				int y2_6 = height * 702 / 1000;
+				int x1_7 = width * 797 / 1000;
+				int x2_7 = width * 802 / 1000;
+				int y1_7 = height * 685 / 1000;
+				int y2_7 = height * 712 / 1000;
+
+
+				if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
+					&& mouseInput.y > height * 682 / 1000 && mouseInput.y < height * 714 / 1000)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1, y2);
+					disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2, y2_2);
+					updateText(&textMenu.at(11), textFirePower);
+					hoverFP = true;
+				}
+				else if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
+					&& mouseInput.y >(height * 682 / 1000) - 30 && mouseInput.y < (height * 714 / 1000) - 30)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1 - 30, y2 - 30);
+					disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2 - 30, y2_2 - 30);
+					updateText(&textMenu.at(11), textHealth);
+					hoverH = true;
+				}
+				else if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
+					&& mouseInput.y >(height * 682 / 1000) - 60 && mouseInput.y < (height * 714 / 1000) - 60)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1, x2, y1 - 60, y2 - 60);
+					disegnaTriangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_2, x2_2, x3_2, y1_2 - 60, y2_2 - 60);
+					updateText(&textMenu.at(11), textSpeed);
+					hoverS = true;
+				}
+				else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
+					&& mouseInput.y > height * 682 / 1000 && mouseInput.y < height * 714 / 1000)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5, y2_5);
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6, y2_6);
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7, y2_7);
+					updateText(&textMenu.at(11), textBomb);
+					hoverB = true;
+				}
+				else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
+					&& mouseInput.y >(height * 682 / 1000) - 30 && mouseInput.y < (height * 714 / 1000) - 30)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5 - 30, y2_5 - 30);
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6 - 30, y2_6 - 30);
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7 - 30, y2_7 - 30);
+					updateText(&textMenu.at(11), textLife);
+					hoverL = true;
+				}
+				else if (mouseInput.x > width * 170 / 1000 && mouseInput.x < width * 250 / 1000
+					&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
+				{
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 1)
+						updateText(&textMenu.at(11), stringToCharBuff("REDUCED SIZE"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[0] = true;
+				}
+				else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
+					&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
+				{
+					x1_3 += 130;
+					x2_3 += 130;
+					x1_4 += 130;
+					x2_4 += 130;
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 2)
+						updateText(&textMenu.at(11), stringToCharBuff("BOUNCING BULLETS"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[1] = true;
+				}
+				else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
+					&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
+				{
+					x1_3 += 260;
+					x2_3 += 260;
+					x1_4 += 260;
+					x2_4 += 260;
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 3)
+						updateText(&textMenu.at(11), stringToCharBuff("DOUBLE TIME"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[2] = true;
+				}
+				else if (mouseInput.x > (width * 170 / 1000) && mouseInput.x < (width * 250 / 1000)
+					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
+				{
+					y1_3 -= 120;
+					y2_3 -= 120;
+					y1_4 -= 120;
+					y2_4 -= 120;
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 4)
+						updateText(&textMenu.at(11), stringToCharBuff("PENETRATING BULLETS"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[3] = true;
+				}
+				else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
+					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
+				{
+					x1_3 += 130;
+					x2_3 += 130;
+					x1_4 += 130;
+					x2_4 += 130;
+					y1_3 -= 120;
+					y2_3 -= 120;
+					y1_4 -= 120;
+					y2_4 -= 120;
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 5)
+						updateText(&textMenu.at(11), stringToCharBuff("EXPLOSIVE BULLETS"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[4] = true;
+				}
+				else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
+					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
+				{
+					x1_3 += 260;
+					x2_3 += 260;
+					x1_4 += 260;
+					x2_4 += 260;
+					y1_3 -= 120;
+					y2_3 -= 120;
+					y1_4 -= 120;
+					y2_4 -= 120;
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_3, x2_3, y1_3, y2_3);
+					//disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_4, x2_4, y1_4, y2_4);
+					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
+					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
+					if (game.unlockedPerks >= 6)
+						updateText(&textMenu.at(11), stringToCharBuff("TIME ALTER"));
+					else
+						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
+					hoverP[5] = true;
+				}
+				else
+				{
+					disegnaHover.clear();
+					coloreHover.clear();
+					updateText(&textMenu.at(11), stringToCharBuff(" "));
+					hoverFP = false;
+					hoverH = false;
+					hoverS = false;
+					hoverB = false;
+					hoverL = false;
+					for (int i = 0; i < PERKS; i++)
+						hoverP[i] = false;
+				}
 			}
-			else if (mouseInput.x > width * 550 / 1000 && mouseInput.x < width * 760 / 1000
-				&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+			else if (gameOver && stopFlow) // Hover bottoni GAMEOVER
 			{
-				disegnaBottoniGO.clear();
-				coloreBottoniGO.clear();
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 1.0 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
-				hoverQG = true;
-			}
-			else
-			{
-				disegnaBottoniGO.clear();
-				coloreBottoniGO.clear();
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
-				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
-				hoverPA = false;
-				hoverQG = false;
+				if (mouseInput.x > width * 240 / 1000 && mouseInput.x < width * 450 / 1000
+					&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+				{
+					disegnaBottoniGO.clear();
+					coloreBottoniGO.clear();
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 1.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+					hoverPA = true;
+				}
+				else if (mouseInput.x > width * 550 / 1000 && mouseInput.x < width * 760 / 1000
+					&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+				{
+					disegnaBottoniGO.clear();
+					coloreBottoniGO.clear();
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 1.0 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+					hoverQG = true;
+				}
+				else
+				{
+					disegnaBottoniGO.clear();
+					coloreBottoniGO.clear();
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+					hoverPA = false;
+					hoverQG = false;
+				}
 			}
 		}
 	}
@@ -3930,6 +4097,7 @@ void init(void)
 	menuInit();
 	statsBarInit();
 	gameOverInit();
+	initMainMenu();
 	quadratiPerkAttiveInit();
 	for (int i = 0; i < PERKS; i++)
 		hoverP[i] = false;
@@ -3973,6 +4141,26 @@ void init(void)
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
+
+	//Genero un VAO mainMenu
+	glGenVertexArrays(1, &VAO_MM);
+	glBindVertexArray(VAO_MM);
+	//vertici
+	glGenBuffers(1, &VBO_MM);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MM);
+	//colori
+	glGenBuffers(1, &VBO_MMC);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MMC);
+
+	//Genero un VAO mainMenuLines
+	glGenVertexArrays(1, &VAO_MML);
+	glBindVertexArray(VAO_MML);
+	//vertici
+	glGenBuffers(1, &VBO_MML);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MML);
+	//colori
+	glGenBuffers(1, &VBO_MMLC);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MMLC);
 
 	//Genero un VAO proiettili
 	glGenVertexArrays(1, &VAO_P);
@@ -4155,328 +4343,265 @@ void drawScene(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(programId);
 
-	Model = mat4(1.0);
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glBindVertexArray(VAO_TP);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_TP);
-	glBufferData(GL_ARRAY_BUFFER, testingPoints.size() * sizeof(vec2), testingPoints.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_TPC);
-	glBufferData(GL_ARRAY_BUFFER, testingColore.size() * sizeof(vec4), testingColore.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glLineWidth(2.0f);
-	glDrawArrays(GL_TRIANGLES, 0, testingPoints.size());
-	glBindVertexArray(0);
-
-	// disegna navicella
-	if (disegnaNav) { // l'if serve per creare l'effetto intermittenza quando si viene colpiti (vita persa)
-		Model = mat4(1.0);
-		Model = translate(Model, vec3(player.pos.x, player.pos.y, 0.0));
-		Model = scale(Model, vec3(player.scale, player.scale, 1.0));
-		Model = rotate(Model, player.angle, vec3(0.0, 0.0, 1.0));
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(player.VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, player.VBO_Geom);
-		glBufferData(GL_ARRAY_BUFFER, player.pts.size() * sizeof(vec2), player.pts.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, player.VBO_Col);
-		glBufferData(GL_ARRAY_BUFFER, player.colors.size() * sizeof(vec4), player.colors.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_LINE_STRIP, 0, player.pts.size() * 2);
-		glBindVertexArray(0);
-
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(player.VAO_S);
-		glBindBuffer(GL_ARRAY_BUFFER, player.VBO_S);
-		glBufferData(GL_ARRAY_BUFFER, player.puntiScia.size() * sizeof(vec2), player.puntiScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, player.VBO_SC);
-		glBufferData(GL_ARRAY_BUFFER, player.coloreScia.size() * sizeof(vec4), player.coloreScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, player.puntiScia.size());
-		glBindVertexArray(0);
-	}
-
-	// disegna proiettili
-	Model = mat4(1.0);
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glBindVertexArray(VAO_P);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_P);
-	glBufferData(GL_ARRAY_BUFFER, disegnaProiettili.size() * sizeof(vec2), disegnaProiettili.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_PC);
-	glBufferData(GL_ARRAY_BUFFER, coloriProiettili.size() * sizeof(vec4), coloriProiettili.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glLineWidth(scalaProiettile);
-	glDrawArrays(GL_LINES, 0, proiettili.size() * 2);
-	glBindVertexArray(0);
-
-	//disegna nemici
-	for (int i = 0; i < nemici.size(); i++)
+	if (mainMenu)
 	{
-		if (nemici.at(i).type == 4)
+		//disegna triangoli mainMenu
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glBindVertexArray(VAO_MM);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_MM);
+		glBufferData(GL_ARRAY_BUFFER, disegnaMainMenu.size() * sizeof(vec2), disegnaMainMenu.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_MMC);
+		glBufferData(GL_ARRAY_BUFFER, coloreMainMenu.size() * sizeof(vec4), coloreMainMenu.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glLineWidth(2.0f);
+		glDrawArrays(GL_TRIANGLES, 0, disegnaMainMenu.size());
+		glBindVertexArray(0);
+
+		//disegna linee mainMenu
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glBindVertexArray(VAO_MML);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_MML);
+		glBufferData(GL_ARRAY_BUFFER, disegnaMainMenuL.size() * sizeof(vec2), disegnaMainMenuL.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_MMLC);
+		glBufferData(GL_ARRAY_BUFFER, coloreMainMenuL.size() * sizeof(vec4), coloreMainMenuL.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glLineWidth(2.0f);
+		glDrawArrays(GL_LINES, 0, disegnaMainMenuL.size());
+		glBindVertexArray(0);
+
+		//disegna testo mainMenu
+		for (int i = 0; i < textMainMenu.size(); i++)
 		{
-			Model = mat4(1.0);
-			Model = translate(Model, vec3(nemici.at(i).nav.pos, 0.0f));
-			Model = scale(Model, vec3(nemici.at(i).nav.scale, nemici.at(i).nav.scale, 1.0));
-			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-			glBindVertexArray(nemici.at(i).nav.VAO);
-			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Geom);
-			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.pts.size() * sizeof(vec2), nemici.at(i).nav.pts.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Col);
-			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.colors.size() * sizeof(vec4), nemici.at(i).nav.colors.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(1);
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINES, 0, nemici.at(i).nav.pts.size());
-			glBindVertexArray(0);
-		}
-		else
-		{
-			Model = mat4(1.0);
-			Model = translate(Model, vec3(nemici.at(i).nav.pos, 0.0f));
-			Model = scale(Model, vec3(nemici.at(i).nav.scale, nemici.at(i).nav.scale, 1.0));
-			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-			glBindVertexArray(nemici.at(i).nav.VAO);
-			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Geom);
-			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.pts.size() * sizeof(vec2), nemici.at(i).nav.pts.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Col);
-			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.colors.size() * sizeof(vec4), nemici.at(i).nav.colors.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(1);
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINE_STRIP, 0, nemici.at(i).nav.pts.size());
-			glBindVertexArray(0);
-		}
+			Text text = textMainMenu.at(i);
 
-		//disegna scia nemico
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(nemici.at(i).nav.VAO_S);
-		glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_S);
-		glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.puntiScia.size() * sizeof(vec2), nemici.at(i).nav.puntiScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_SC);
-		glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.coloreScia.size() * sizeof(vec4), nemici.at(i).nav.coloreScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, nemici.at(i).nav.puntiScia.size());
-		glBindVertexArray(0);
-
-	}
-
-	for (int i = 0; i < residui.size(); i++)
-	{
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_RS);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_RS);
-		glBufferData(GL_ARRAY_BUFFER, residui.at(i).puntiScia.size() * sizeof(vec2), residui.at(i).puntiScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_RSC);
-		glBufferData(GL_ARRAY_BUFFER, residui.at(i).coloreScia.size() * sizeof(vec4), residui.at(i).coloreScia.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, residui.at(i).puntiScia.size());
-		glBindVertexArray(0);
-	}
-
-	if (sequenza_bomba > 0)
-	{
-		// disegna bomba
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_BMB);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_BMB);
-		glBufferData(GL_ARRAY_BUFFER, disegnaBomba.size() * sizeof(vec2), disegnaBomba.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_BMBC);
-		glBufferData(GL_ARRAY_BUFFER, coloreBomba.size() * sizeof(vec4), coloreBomba.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(10.0f * (float)sequenza_bomba);
-		glDrawArrays(GL_LINE_STRIP, 0, disegnaBomba.size());
-		glBindVertexArray(0);
-	}
-
-	// disegna statsBar
-	Model = mat4(1.0);
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glBindVertexArray(VAO_SB);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_SB);
-	glBufferData(GL_ARRAY_BUFFER, disegnaStatsBar.size() * sizeof(vec2), disegnaStatsBar.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_SBC);
-	glBufferData(GL_ARRAY_BUFFER, coloreStatsBar.size() * sizeof(vec4), coloreStatsBar.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glLineWidth(2.0f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaStatsBar.size());
-	glBindVertexArray(0);
-
-	// disegna testo statsBar
-	for (int i = 0; i < textStatsBar.size(); i++)
-	{
-		Text text = textStatsBar.at(i);
-
-		if (text.visible)
-		{
-			for (int j = 0; j < text.letters.size(); j++)
+			if (text.visible)
 			{
-				Letter let = text.letters.at(j);
+				for (int j = 0; j < text.letters.size(); j++)
+				{
+					Letter let = text.letters.at(j);
 
-				glm::mat4 modelMatrix = glm::mat4(1.0);
-				modelMatrix = translate(modelMatrix, glm::vec3(text.pos.x, text.pos.y, 0.0f));
-				modelMatrix = scale(modelMatrix, glm::vec3(text.scale, text.scale, 0.0f));
-				glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
+					glm::mat4 modelMatrix = glm::mat4(1.0);
+					modelMatrix = translate(modelMatrix, glm::vec3(text.pos.x, text.pos.y, 0.0f));
+					modelMatrix = scale(modelMatrix, glm::vec3(text.scale, text.scale, 0.0f));
+					glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
 
-				glBindVertexArray(let.VAO);
-				glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Geom);
-				glBufferData(GL_ARRAY_BUFFER, let.points.size() * sizeof(vec2), let.points.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(0);
-				glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Col);
-				glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(1);
-				if (let.sizePoints > 0.0f)
-					glPointSize(let.sizePoints);
-				else glPointSize(1.0f);
-				if (let.widthLines > 0.0f)
-					glLineWidth(let.widthLines);
-				else glLineWidth(1.0f);
+					glBindVertexArray(let.VAO);
+					glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Geom);
+					glBufferData(GL_ARRAY_BUFFER, let.points.size() * sizeof(vec2), let.points.data(), GL_STATIC_DRAW);
+					glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+					glEnableVertexAttribArray(0);
+					glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Col);
+					glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
+					glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+					glEnableVertexAttribArray(1);
+					if (let.sizePoints > 0.0f)
+						glPointSize(let.sizePoints);
+					else glPointSize(1.0f);
+					if (let.widthLines > 0.0f)
+						glLineWidth(let.widthLines);
+					else glLineWidth(1.0f);
 
-				glDrawArrays(let.drawMode, 0, let.points.size());
+					glDrawArrays(let.drawMode, 0, let.points.size());
 
-				glBindVertexArray(0);
+					glBindVertexArray(0);
+				}
 			}
 		}
 	}
-
-	// disegna healthBar
-	Model = mat4(1.0);
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glBindVertexArray(VAO_SB);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_SB);
-	glBufferData(GL_ARRAY_BUFFER, disegnaHealthBar.size() * sizeof(vec2), disegnaHealthBar.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_SBC);
-	glBufferData(GL_ARRAY_BUFFER, coloreHealthBar.size() * sizeof(vec4), coloreHealthBar.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glLineWidth(2.0f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaHealthBar.size());
-	glBindVertexArray(0);
-
-	if (pause)
+	else
 	{
-
-		// disegna background menu
 		Model = mat4(1.0);
 		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_M);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
-		glBufferData(GL_ARRAY_BUFFER, disegnaBackgroundMenu.size() * sizeof(vec2), disegnaBackgroundMenu.data(), GL_STATIC_DRAW);
+		glBindVertexArray(VAO_TP);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_TP);
+		glBufferData(GL_ARRAY_BUFFER, testingPoints.size() * sizeof(vec2), testingPoints.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
-		glBufferData(GL_ARRAY_BUFFER, coloreBackgroundMenu.size() * sizeof(vec4), coloreBackgroundMenu.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_TPC);
+		glBufferData(GL_ARRAY_BUFFER, testingColore.size() * sizeof(vec4), testingColore.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
 		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaBackgroundMenu.size());
+		glDrawArrays(GL_TRIANGLES, 0, testingPoints.size());
 		glBindVertexArray(0);
 
-		// disegna contorno menu
+		// disegna navicella
+		if (disegnaNav) { // l'if serve per creare l'effetto intermittenza quando si viene colpiti (vita persa)
+			Model = mat4(1.0);
+			Model = translate(Model, vec3(player.pos.x, player.pos.y, 0.0));
+			Model = scale(Model, vec3(player.scale, player.scale, 1.0));
+			Model = rotate(Model, player.angle, vec3(0.0, 0.0, 1.0));
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(player.VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, player.VBO_Geom);
+			glBufferData(GL_ARRAY_BUFFER, player.pts.size() * sizeof(vec2), player.pts.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, player.VBO_Col);
+			glBufferData(GL_ARRAY_BUFFER, player.colors.size() * sizeof(vec4), player.colors.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINE_STRIP, 0, player.pts.size() * 2);
+			glBindVertexArray(0);
+
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(player.VAO_S);
+			glBindBuffer(GL_ARRAY_BUFFER, player.VBO_S);
+			glBufferData(GL_ARRAY_BUFFER, player.puntiScia.size() * sizeof(vec2), player.puntiScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, player.VBO_SC);
+			glBufferData(GL_ARRAY_BUFFER, player.coloreScia.size() * sizeof(vec4), player.coloreScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, player.puntiScia.size());
+			glBindVertexArray(0);
+		}
+
+		// disegna proiettili
 		Model = mat4(1.0);
 		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_M);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
-		glBufferData(GL_ARRAY_BUFFER, disegnaContornoMenu.size() * sizeof(vec2), disegnaContornoMenu.data(), GL_STATIC_DRAW);
+		glBindVertexArray(VAO_P);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_P);
+		glBufferData(GL_ARRAY_BUFFER, disegnaProiettili.size() * sizeof(vec2), disegnaProiettili.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
-		glBufferData(GL_ARRAY_BUFFER, coloreContornoMenu.size() * sizeof(vec4), coloreContornoMenu.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_PC);
+		glBufferData(GL_ARRAY_BUFFER, coloriProiettili.size() * sizeof(vec4), coloriProiettili.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_LINE_STRIP, 0, disegnaContornoMenu.size());
+		glLineWidth(scalaProiettile);
+		glDrawArrays(GL_LINES, 0, proiettili.size() * 2);
 		glBindVertexArray(0);
 
-		// disegna box menu
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_M);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
-		glBufferData(GL_ARRAY_BUFFER, disegnaBox.size() * sizeof(vec2), disegnaBox.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
-		glBufferData(GL_ARRAY_BUFFER, coloreBox.size() * sizeof(vec4), coloreBox.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, disegnaBox.size());
-		glBindVertexArray(0);
-
-		// disegna lucchetti menu
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_M);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
-		glBufferData(GL_ARRAY_BUFFER, disegnaLucchetto.size() * sizeof(vec2), disegnaLucchetto.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
-		glBufferData(GL_ARRAY_BUFFER, coloreLucchetto.size() * sizeof(vec4), coloreLucchetto.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, disegnaLucchetto.size());
-		glBindVertexArray(0);
-
-		// disegna arco lucchetti menu
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_M);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
-		glBufferData(GL_ARRAY_BUFFER, disegnaArcoLucchetto.size() * sizeof(vec2), disegnaArcoLucchetto.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
-		glBufferData(GL_ARRAY_BUFFER, coloreArcoLucchetto.size() * sizeof(vec4), coloreArcoLucchetto.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, disegnaArcoLucchetto.size());
-		glBindVertexArray(0);
-
-		// disegna testo menu
-		for (int i = 0; i < textMenu.size(); i++)
+		//disegna nemici
+		for (int i = 0; i < nemici.size(); i++)
 		{
-			Text text = textMenu.at(i);
+			if (nemici.at(i).type == 4)
+			{
+				Model = mat4(1.0);
+				Model = translate(Model, vec3(nemici.at(i).nav.pos, 0.0f));
+				Model = scale(Model, vec3(nemici.at(i).nav.scale, nemici.at(i).nav.scale, 1.0));
+				glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+				glBindVertexArray(nemici.at(i).nav.VAO);
+				glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Geom);
+				glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.pts.size() * sizeof(vec2), nemici.at(i).nav.pts.data(), GL_STATIC_DRAW);
+				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(0);
+				glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Col);
+				glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.colors.size() * sizeof(vec4), nemici.at(i).nav.colors.data(), GL_STATIC_DRAW);
+				glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(1);
+				glLineWidth(2.0f);
+				glDrawArrays(GL_LINES, 0, nemici.at(i).nav.pts.size());
+				glBindVertexArray(0);
+			}
+			else
+			{
+				Model = mat4(1.0);
+				Model = translate(Model, vec3(nemici.at(i).nav.pos, 0.0f));
+				Model = scale(Model, vec3(nemici.at(i).nav.scale, nemici.at(i).nav.scale, 1.0));
+				glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+				glBindVertexArray(nemici.at(i).nav.VAO);
+				glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Geom);
+				glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.pts.size() * sizeof(vec2), nemici.at(i).nav.pts.data(), GL_STATIC_DRAW);
+				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(0);
+				glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_Col);
+				glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.colors.size() * sizeof(vec4), nemici.at(i).nav.colors.data(), GL_STATIC_DRAW);
+				glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(1);
+				glLineWidth(2.0f);
+				glDrawArrays(GL_LINE_STRIP, 0, nemici.at(i).nav.pts.size());
+				glBindVertexArray(0);
+			}
+
+			//disegna scia nemico
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(nemici.at(i).nav.VAO_S);
+			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_S);
+			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.puntiScia.size() * sizeof(vec2), nemici.at(i).nav.puntiScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_SC);
+			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.coloreScia.size() * sizeof(vec4), nemici.at(i).nav.coloreScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, nemici.at(i).nav.puntiScia.size());
+			glBindVertexArray(0);
+
+		}
+
+		for (int i = 0; i < residui.size(); i++)
+		{
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_RS);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_RS);
+			glBufferData(GL_ARRAY_BUFFER, residui.at(i).puntiScia.size() * sizeof(vec2), residui.at(i).puntiScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_RSC);
+			glBufferData(GL_ARRAY_BUFFER, residui.at(i).coloreScia.size() * sizeof(vec4), residui.at(i).coloreScia.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, residui.at(i).puntiScia.size());
+			glBindVertexArray(0);
+		}
+
+		if (sequenza_bomba > 0)
+		{
+			// disegna bomba
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_BMB);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_BMB);
+			glBufferData(GL_ARRAY_BUFFER, disegnaBomba.size() * sizeof(vec2), disegnaBomba.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_BMBC);
+			glBufferData(GL_ARRAY_BUFFER, coloreBomba.size() * sizeof(vec4), coloreBomba.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(10.0f * (float)sequenza_bomba);
+			glDrawArrays(GL_LINE_STRIP, 0, disegnaBomba.size());
+			glBindVertexArray(0);
+		}
+
+		// disegna statsBar
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glBindVertexArray(VAO_SB);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SB);
+		glBufferData(GL_ARRAY_BUFFER, disegnaStatsBar.size() * sizeof(vec2), disegnaStatsBar.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SBC);
+		glBufferData(GL_ARRAY_BUFFER, coloreStatsBar.size() * sizeof(vec4), coloreStatsBar.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glLineWidth(2.0f);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaStatsBar.size());
+		glBindVertexArray(0);
+
+		// disegna testo statsBar
+		for (int i = 0; i < textStatsBar.size(); i++)
+		{
+			Text text = textStatsBar.at(i);
 
 			if (text.visible)
 			{
@@ -4512,159 +4637,231 @@ void drawScene(void)
 			}
 		}
 
-		// disegna box hovered
+		// disegna healthBar
 		Model = mat4(1.0);
 		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_H);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_H);
-		glBufferData(GL_ARRAY_BUFFER, disegnaHover.size() * sizeof(vec2), disegnaHover.data(), GL_STATIC_DRAW);
+		glBindVertexArray(VAO_SB);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SB);
+		glBufferData(GL_ARRAY_BUFFER, disegnaHealthBar.size() * sizeof(vec2), disegnaHealthBar.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_HC);
-		glBufferData(GL_ARRAY_BUFFER, coloreHover.size() * sizeof(vec4), coloreHover.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SBC);
+		glBufferData(GL_ARRAY_BUFFER, coloreHealthBar.size() * sizeof(vec4), coloreHealthBar.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
 		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, disegnaHover.size());
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaHealthBar.size());
 		glBindVertexArray(0);
 
-		for (int i = 0; i < quadratiPerks.size(); i++)
+		if (pause)
 		{
-			if (game.perksActive[i])
+
+			// disegna background menu
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_M);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
+			glBufferData(GL_ARRAY_BUFFER, disegnaBackgroundMenu.size() * sizeof(vec2), disegnaBackgroundMenu.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
+			glBufferData(GL_ARRAY_BUFFER, coloreBackgroundMenu.size() * sizeof(vec4), coloreBackgroundMenu.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaBackgroundMenu.size());
+			glBindVertexArray(0);
+
+			// disegna contorno menu
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_M);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
+			glBufferData(GL_ARRAY_BUFFER, disegnaContornoMenu.size() * sizeof(vec2), disegnaContornoMenu.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
+			glBufferData(GL_ARRAY_BUFFER, coloreContornoMenu.size() * sizeof(vec4), coloreContornoMenu.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINE_STRIP, 0, disegnaContornoMenu.size());
+			glBindVertexArray(0);
+
+			// disegna box menu
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_M);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
+			glBufferData(GL_ARRAY_BUFFER, disegnaBox.size() * sizeof(vec2), disegnaBox.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
+			glBufferData(GL_ARRAY_BUFFER, coloreBox.size() * sizeof(vec4), coloreBox.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaBox.size());
+			glBindVertexArray(0);
+
+			// disegna lucchetti menu
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_M);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
+			glBufferData(GL_ARRAY_BUFFER, disegnaLucchetto.size() * sizeof(vec2), disegnaLucchetto.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
+			glBufferData(GL_ARRAY_BUFFER, coloreLucchetto.size() * sizeof(vec4), coloreLucchetto.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaLucchetto.size());
+			glBindVertexArray(0);
+
+			// disegna arco lucchetti menu
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_M);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_M);
+			glBufferData(GL_ARRAY_BUFFER, disegnaArcoLucchetto.size() * sizeof(vec2), disegnaArcoLucchetto.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_MC);
+			glBufferData(GL_ARRAY_BUFFER, coloreArcoLucchetto.size() * sizeof(vec4), coloreArcoLucchetto.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaArcoLucchetto.size());
+			glBindVertexArray(0);
+
+			// disegna testo menu
+			for (int i = 0; i < textMenu.size(); i++)
 			{
-				Model = mat4(1.0);
-				glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-				glBindVertexArray(VAO_PS);
-				glBindBuffer(GL_ARRAY_BUFFER, VBO_PS);
-				glBufferData(GL_ARRAY_BUFFER, quadratiPerks.at(i).disegnaActivePerkSquare.size() * sizeof(vec2), quadratiPerks.at(i).disegnaActivePerkSquare.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(0);
-				glBindBuffer(GL_ARRAY_BUFFER, VBO_PSC);
-				glBufferData(GL_ARRAY_BUFFER, quadratiPerks.at(i).coloreActivePerkSquare.size() * sizeof(vec4), quadratiPerks.at(i).coloreActivePerkSquare.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(1);
-				glLineWidth(2.0f);
-				glDrawArrays(GL_TRIANGLES, 0, quadratiPerks.at(i).disegnaActivePerkSquare.size());
-				glBindVertexArray(0);
-			}
-		}
+				Text text = textMenu.at(i);
 
-		// DISEGNA quadrati verdi sotto le perk attive - rgb (0.46, 0.86, 0.46)
-
-		// disegna linee perk menu
-		int x = width * 210 / 1000;
-		int y = height * 420 / 1000;
-		glm::mat4 modelMatrix = glm::mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
-		glBindVertexArray(VAO_DP);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_DP);
-		glBufferData(GL_ARRAY_BUFFER, disegnaPerks.size() * sizeof(vec2), disegnaPerks.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_DPC);
-		glBufferData(GL_ARRAY_BUFFER, colorePerks.size() * sizeof(vec4), colorePerks.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_LINES, 0, disegnaPerks.size());
-		glBindVertexArray(0);
-
-		// disegna triangoli perk menu
-		modelMatrix = glm::mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
-		glBindVertexArray(VAO_DPT);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_DPT);
-		glBufferData(GL_ARRAY_BUFFER, disegnaPerksT.size() * sizeof(vec2), disegnaPerksT.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_DPTC);
-		glBufferData(GL_ARRAY_BUFFER, colorePerksT.size() * sizeof(vec4), colorePerksT.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaPerksT.size());
-		glBindVertexArray(0);
-	}
-
-	// disegna sequenza gameOver
-	if (gameOver)
-	{
-
-		if (textGameOver.visible)
-		{
-			for (int j = 0; j < textGameOver.letters.size(); j++)
-			{
-				Letter let = textGameOver.letters.at(j);
-
-				glm::mat4 modelMatrix = glm::mat4(1.0);
-				modelMatrix = translate(modelMatrix, glm::vec3(textGameOver.pos.x, textGameOver.pos.y, 0.0f));
-				modelMatrix = scale(modelMatrix, glm::vec3(textGameOver.scale, textGameOver.scale, 0.0f));
-				glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
-
-				glBindVertexArray(let.VAO);
-				glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Geom);
-				glBufferData(GL_ARRAY_BUFFER, let.points.size() * sizeof(vec2), let.points.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(0);
-				glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Col);
-				glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
-				glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(1);
-				glLineWidth(5);
-
-				glDrawArrays(let.drawMode, 0, let.points.size());
-
-				glBindVertexArray(0);
-			}
-		}
-
-
-		// disegna triangoli bottoni gameover
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_BGO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
-		glBufferData(GL_ARRAY_BUFFER, disegnaBottoniGO.size() * sizeof(vec2), disegnaBottoniGO.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGOC);
-		glBufferData(GL_ARRAY_BUFFER, coloreBottoniGO.size() * sizeof(vec4), coloreBottoniGO.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_TRIANGLES, 0, disegnaBottoniGO.size());
-		glBindVertexArray(0);
-
-
-		// disegna contorni bottoni gameover
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glBindVertexArray(VAO_CBGO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
-		glBufferData(GL_ARRAY_BUFFER, disegnaContornoBGO.size() * sizeof(vec2), disegnaContornoBGO.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_CBGOC);
-		glBufferData(GL_ARRAY_BUFFER, coloreContornoBGO.size() * sizeof(vec4), coloreContornoBGO.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glLineWidth(2.0f);
-		glDrawArrays(GL_LINES, 0, disegnaContornoBGO.size());
-		glBindVertexArray(0);
-
-		for (int i = 0; i < textPunteggio.size(); i++)
-		{
-			Text text = textPunteggio.at(i);
-
-			if (text.visible)
-			{
-				for (int j = 0; j < text.letters.size(); j++)
+				if (text.visible)
 				{
-					Letter let = text.letters.at(j);
+					for (int j = 0; j < text.letters.size(); j++)
+					{
+						Letter let = text.letters.at(j);
+
+						glm::mat4 modelMatrix = glm::mat4(1.0);
+						modelMatrix = translate(modelMatrix, glm::vec3(text.pos.x, text.pos.y, 0.0f));
+						modelMatrix = scale(modelMatrix, glm::vec3(text.scale, text.scale, 0.0f));
+						glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
+
+						glBindVertexArray(let.VAO);
+						glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Geom);
+						glBufferData(GL_ARRAY_BUFFER, let.points.size() * sizeof(vec2), let.points.data(), GL_STATIC_DRAW);
+						glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+						glEnableVertexAttribArray(0);
+						glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Col);
+						glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
+						glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+						glEnableVertexAttribArray(1);
+						if (let.sizePoints > 0.0f)
+							glPointSize(let.sizePoints);
+						else glPointSize(1.0f);
+						if (let.widthLines > 0.0f)
+							glLineWidth(let.widthLines);
+						else glLineWidth(1.0f);
+
+						glDrawArrays(let.drawMode, 0, let.points.size());
+
+						glBindVertexArray(0);
+					}
+				}
+			}
+
+			// disegna box hovered
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_H);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_H);
+			glBufferData(GL_ARRAY_BUFFER, disegnaHover.size() * sizeof(vec2), disegnaHover.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_HC);
+			glBufferData(GL_ARRAY_BUFFER, coloreHover.size() * sizeof(vec4), coloreHover.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaHover.size());
+			glBindVertexArray(0);
+
+			for (int i = 0; i < quadratiPerks.size(); i++)
+			{
+				if (game.perksActive[i])
+				{
+					Model = mat4(1.0);
+					glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+					glBindVertexArray(VAO_PS);
+					glBindBuffer(GL_ARRAY_BUFFER, VBO_PS);
+					glBufferData(GL_ARRAY_BUFFER, quadratiPerks.at(i).disegnaActivePerkSquare.size() * sizeof(vec2), quadratiPerks.at(i).disegnaActivePerkSquare.data(), GL_STATIC_DRAW);
+					glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+					glEnableVertexAttribArray(0);
+					glBindBuffer(GL_ARRAY_BUFFER, VBO_PSC);
+					glBufferData(GL_ARRAY_BUFFER, quadratiPerks.at(i).coloreActivePerkSquare.size() * sizeof(vec4), quadratiPerks.at(i).coloreActivePerkSquare.data(), GL_STATIC_DRAW);
+					glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+					glEnableVertexAttribArray(1);
+					glLineWidth(2.0f);
+					glDrawArrays(GL_TRIANGLES, 0, quadratiPerks.at(i).disegnaActivePerkSquare.size());
+					glBindVertexArray(0);
+				}
+			}
+
+			// DISEGNA quadrati verdi sotto le perk attive - rgb (0.46, 0.86, 0.46)
+
+			// disegna linee perk menu
+			int x = width * 210 / 1000;
+			int y = height * 420 / 1000;
+			glm::mat4 modelMatrix = glm::mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
+			glBindVertexArray(VAO_DP);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_DP);
+			glBufferData(GL_ARRAY_BUFFER, disegnaPerks.size() * sizeof(vec2), disegnaPerks.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_DPC);
+			glBufferData(GL_ARRAY_BUFFER, colorePerks.size() * sizeof(vec4), colorePerks.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINES, 0, disegnaPerks.size());
+			glBindVertexArray(0);
+
+			// disegna triangoli perk menu
+			modelMatrix = glm::mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
+			glBindVertexArray(VAO_DPT);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_DPT);
+			glBufferData(GL_ARRAY_BUFFER, disegnaPerksT.size() * sizeof(vec2), disegnaPerksT.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_DPTC);
+			glBufferData(GL_ARRAY_BUFFER, colorePerksT.size() * sizeof(vec4), colorePerksT.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, disegnaPerksT.size());
+			glBindVertexArray(0);
+		}
+
+		// disegna sequenza gameOver
+		if (gameOver)
+		{
+
+			if (textGameOver.visible)
+			{
+				for (int j = 0; j < textGameOver.letters.size(); j++)
+				{
+					Letter let = textGameOver.letters.at(j);
 
 					glm::mat4 modelMatrix = glm::mat4(1.0);
-					modelMatrix = translate(modelMatrix, glm::vec3(text.pos.x, text.pos.y, 0.0f));
-					modelMatrix = scale(modelMatrix, glm::vec3(text.scale, text.scale, 0.0f));
+					modelMatrix = translate(modelMatrix, glm::vec3(textGameOver.pos.x, textGameOver.pos.y, 0.0f));
+					modelMatrix = scale(modelMatrix, glm::vec3(textGameOver.scale, textGameOver.scale, 0.0f));
 					glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
 
 					glBindVertexArray(let.VAO);
@@ -4676,11 +4873,78 @@ void drawScene(void)
 					glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
 					glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 					glEnableVertexAttribArray(1);
-					glLineWidth(3);
+					glLineWidth(5);
 
 					glDrawArrays(let.drawMode, 0, let.points.size());
 
 					glBindVertexArray(0);
+				}
+			}
+
+
+			// disegna triangoli bottoni gameover
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_BGO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
+			glBufferData(GL_ARRAY_BUFFER, disegnaBottoniGO.size() * sizeof(vec2), disegnaBottoniGO.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_BGOC);
+			glBufferData(GL_ARRAY_BUFFER, coloreBottoniGO.size() * sizeof(vec4), coloreBottoniGO.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaBottoniGO.size());
+			glBindVertexArray(0);
+
+
+			// disegna contorni bottoni gameover
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_CBGO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
+			glBufferData(GL_ARRAY_BUFFER, disegnaContornoBGO.size() * sizeof(vec2), disegnaContornoBGO.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_CBGOC);
+			glBufferData(GL_ARRAY_BUFFER, coloreContornoBGO.size() * sizeof(vec4), coloreContornoBGO.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINES, 0, disegnaContornoBGO.size());
+			glBindVertexArray(0);
+
+			for (int i = 0; i < textPunteggio.size(); i++)
+			{
+				Text text = textPunteggio.at(i);
+
+				if (text.visible)
+				{
+					for (int j = 0; j < text.letters.size(); j++)
+					{
+						Letter let = text.letters.at(j);
+
+						glm::mat4 modelMatrix = glm::mat4(1.0);
+						modelMatrix = translate(modelMatrix, glm::vec3(text.pos.x, text.pos.y, 0.0f));
+						modelMatrix = scale(modelMatrix, glm::vec3(text.scale, text.scale, 0.0f));
+						glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(modelMatrix));
+
+						glBindVertexArray(let.VAO);
+						glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Geom);
+						glBufferData(GL_ARRAY_BUFFER, let.points.size() * sizeof(vec2), let.points.data(), GL_STATIC_DRAW);
+						glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+						glEnableVertexAttribArray(0);
+						glBindBuffer(GL_ARRAY_BUFFER, let.VBO_Col);
+						glBufferData(GL_ARRAY_BUFFER, let.colors.size() * sizeof(vec4), let.colors.data(), GL_STATIC_DRAW);
+						glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+						glEnableVertexAttribArray(1);
+						glLineWidth(3);
+
+						glDrawArrays(let.drawMode, 0, let.points.size());
+
+						glBindVertexArray(0);
+					}
 				}
 			}
 		}
