@@ -135,6 +135,7 @@ typedef struct {
 	int unlockedPerks; // numero progressivo delle perk sbloccate
 	int numActivePerks; // numero delle perk attivate al momento per il controllo con maxPerks
 	int maxPerks;
+	float cdmultiplier;
 } Game;
 
 Game game;
@@ -252,7 +253,7 @@ float max_vel = 8.0f;
 float vel_inc = 0.3f;
 float vel_dec = 0.4f;
 float acc = 0.3f; //accelerazione
-float scala = 18.0f; 
+float scala = 18.0f;
 
 
 // Nemici
@@ -307,18 +308,22 @@ bool hoverH = false;
 bool hoverS = false;
 bool hoverB = false;
 bool hoverL = false;
+bool hoverPA = false;
+bool hoverQG = false;
 bool hoverP[PERKS];
-int costsFirePower[FIREPOWER] = { 1, 2, 3, 4 };
-// int costsFirePower[FIREPOWER] = { 45, 105, 166, 214 };
-int costsHealth[HEALTH] = { 1, 1, 1, 1, 2, 3 };
-//int costsHealth[HEALTH] = { 40, 80, 120, 170, 230, 300 };
-int costsSpeed[SPEED] = { 0, 0, 0 };
-//int costsSpeed[SPEED] = { 20, 49, 101 };
-int costLife = 450;
-int costBomb = 300;
+// int costsFirePower[FIREPOWER] = { 1, 2, 3, 4 };
+int costsFirePower[FIREPOWER] = { 45, 105, 166, 214 };
+// int costsHealth[HEALTH] = { 1, 1, 1, 1, 2, 3 };
+int costsHealth[HEALTH] = { 40, 80, 120, 170, 230, 300 };
+// int costsSpeed[SPEED] = { 0, 0, 0 };
+int costsSpeed[SPEED] = { 20, 49, 101 };
+int costLife = 0;
+int costBomb = 0;
 char* textFirePower;
 char* textHealth;
 char* textSpeed;
+char* textBomb;
+char* textLife;
 
 vec2 padding = { 20.0f, 20.0f }; // quanto distanti dai bordi spawnano i nemici
 
@@ -347,6 +352,7 @@ std::vector<vec4> coloriProiettili;
 GLuint VAO_P, VBO_P, VBO_PC;
 float velocitaProiettili = 30.0;
 float lunghezzaProiettile = 10.0;
+float scalaProiettile = 4.0;
 int pixelCheckInterval = 10;
 int checkTimes = (lunghezzaProiettile + velocitaProiettili) / pixelCheckInterval;
 
@@ -395,6 +401,12 @@ std::vector<Text> textStatsBar;
 Text textGameOver;
 std::vector<Text> textPunteggio;
 char buffer[32];
+std::vector<vec2> disegnaBottoniGO;
+std::vector<vec4> coloreBottoniGO;
+GLuint VAO_BGO, VBO_BGO, VBO_BGOC;
+std::vector<vec2> disegnaContornoBGO;
+std::vector<vec4> coloreContornoBGO;
+GLuint VAO_CBGO, VBO_CBGO, VBO_CBGOC;
 
 std::vector<vec2> testingPoints;
 std::vector<vec4> testingColore;
@@ -479,7 +491,7 @@ void update_dodged(int id) // funzione da chiamare quando un proiettile viene el
 		if (nemici.at(i).type == 4)
 		{
 			int trovato = -1;
-			for(int k = 0; k < nemici.at(i).dodged.size(); k++)
+			for (int k = 0; k < nemici.at(i).dodged.size(); k++)
 				if (nemici.at(i).dodged.at(k) == id)
 					trovato = k;
 			if (trovato != -1)
@@ -654,15 +666,38 @@ void vitaPersa()
 		player.coloreScia.clear();
 		game.lives--;
 		updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
+		updateText(&textMenu.at(16), intToCharBuff(game.lives));
 	}
 }
 
-void gameOverTextInit()
+void gameOverInit()
 {
 	//text
-	textGameOver = createText2(width * 78 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", {1.0, 1.0, 1.0, 0.0});
+	textGameOver = createText2(width * 78 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
 	snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
-	textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.0 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+	disegnaContornoBGO.push_back({ width * 240 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 450 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 450 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 450 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 450 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 240 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 240 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 240 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 550 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 760 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 760 / 1000, height * 150 / 1000 });
+	disegnaContornoBGO.push_back({ width * 760 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 760 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 550 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 550 / 1000, height * 280 / 1000 });
+	disegnaContornoBGO.push_back({ width * 550 / 1000, height * 150 / 1000 });
+	for (int i = 0; i < 16; i++)
+		coloreContornoBGO.push_back({ 1.0, 1.0, 1.0, 0.0 });
 }
 
 
@@ -697,34 +732,8 @@ void statsBarInit()
 		width * 572 / 1000, width * (572 + maxH) / 1000, height * 987 / 1000, height * 966 / 1000);
 }
 
-void menuInit()
+void menuGraficheInit()
 {
-	//text
-	Text textMenuScore = createText(width * 200 / 1000, height * 780 / 1000, false, 4.0, true, "POINTS");
-	textMenu.push_back(textMenuScore);
-	Text textMenuScoreValue = createText(width * 270 / 1000, height * 780 / 1000, false, 4.0, true, "0");
-	textMenu.push_back(textMenuScoreValue);
-	Text textMenuLevel = createText(width * 370 / 1000, height * 780 / 1000, true, 4.0, true, "LEVEL");
-	textMenu.push_back(textMenuLevel);
-	Text textMenuUpgrade = createText(width * 450 / 1000, height * 780 / 1000, true, 4.0, true, "UPGRADE");
-	textMenu.push_back(textMenuUpgrade);
-	Text textMenuFirePower = createText(width * 200 / 1000, height * 700 / 1000, false, 4.0, true, "FIREPOWER");
-	textMenu.push_back(textMenuFirePower);
-	Text textMenuFirePowerLvl = createText(width * 370 / 1000, height * 700 / 1000, false, 4.0, true, "1");
-	textMenu.push_back(textMenuFirePowerLvl);
-	Text textMenuHealth = createText(width * 200 / 1000, height * 660 / 1000, false, 4.0, true, "HEALTH");
-	textMenu.push_back(textMenuHealth);
-	Text textMenuHealthLvl = createText(width * 370 / 1000, height * 660 / 1000, false, 4.0, true, "1");
-	textMenu.push_back(textMenuHealthLvl);
-	Text textMenuSpeed = createText(width * 200 / 1000, height * 620 / 1000, false, 4.0, true, "SPEED");
-	textMenu.push_back(textMenuSpeed);
-	Text textMenuSpeedLvl = createText(width * 370 / 1000, height * 620 / 1000, false, 4.0, true, "1");
-	textMenu.push_back(textMenuSpeedLvl);
-	Text textMenuAbilityPerks = createText(width * 310 / 1000, height * 525 / 1000, true, 6.0, true, "ABILITY PERKS");
-	textMenu.push_back(textMenuAbilityPerks);
-	Text textInfo = createText(width * 175 / 1000, height * 160 / 1000, false, 4.0, true, " ");
-	textMenu.push_back(textInfo);
-
 	//background menu
 	disegnaRettangolo(&disegnaBackgroundMenu, &coloreBackgroundMenu, { 1.0f, 1.0f, 1.0f, 0.2f },
 		width * 15 / 100, width * 85 / 100, height * 10 / 100, height * 85 / 100);
@@ -742,17 +751,17 @@ void menuInit()
 	}
 
 	//boxes
-	int x1 = width * 170 / 1000;
-	int x2 = width * 250 / 1000;
-	int y1 = height * 355 / 1000;
-	int y2 = height * 485 / 1000;
+	float x1 = width * 170 / 1000;
+	float x2 = width * 250 / 1000;
+	float y1 = height * 355 / 1000;
+	float y2 = height * 485 / 1000;
 	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
 
 	//lucchetto
-	int x1_2 = width * 185 / 1000;
-	int x2_2 = width * 235 / 1000;
-	int y1_2 = height * 375 / 1000;
-	int y2_2 = height * 422 / 1000;
+	float x1_2 = width * 185 / 1000;
+	float x2_2 = width * 235 / 1000;
+	float y1_2 = height * 375 / 1000;
+	float y2_2 = height * 422 / 1000;
 
 	disegnaRettangolo(&disegnaLucchetto, &coloreLucchetto, { 0.0f, 0.0f, 0.0f, 0.8f }, x1_2, x2_2, y1_2, y2_2);
 	disegnaCoronaCircolare(&disegnaArcoLucchetto, &coloreArcoLucchetto, { (float)(x1_2 + x2_2) / 2, (float)y2_2 }, { 0.0, 0.0, 0.0, 0.8f }, { 0.0, 0.0, 0.0, 0.8f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
@@ -836,6 +845,140 @@ void menuInit()
 	y2 -= 30;
 	disegnaTriangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, x3, y1, y2);
 
+
+	// disegna quadrati buy
+	x1 = width * 790 / 1000;
+	x2 = width * 808 / 1000;
+	y1 = height * 682 / 1000;
+	y2 = height * 714 / 1000;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
+
+	y1 -= 30;
+	y2 -= 30;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
+
+
+	// disegna simboli buy
+	x1 = width * 792 / 1000;
+	x2 = width * 807 / 1000;
+	y1 = height * 695 / 1000;
+	y2 = height * 702 / 1000;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+	y1 -= 30;
+	y2 -= 30;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+	x1 = width * 797 / 1000;
+	x2 = width * 802 / 1000;
+	y1 = height * 685 / 1000;
+	y2 = height * 712 / 1000;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+	y1 -= 30;
+	y2 -= 30;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+
+	// disegna quadrati volume
+	x1 = width * 790 / 1000;
+	x2 = width * 808 / 1000;
+	y1 = height * 432 / 1000;
+	y2 = height * 464 / 1000;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
+
+	y1 -= 70;
+	y2 -= 70;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
+
+
+	// disegna simboli volume
+	x1 = width * 793 / 1000;
+	x2 = width * 798 / 1000;
+	y1 = height * 442 / 1000;
+	y2 = height * 454 / 1000;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+	y1 -= 70;
+	y2 -= 70;
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
+
+
+	x1 = width * 798 / 1000;
+	x2 = width * 806 / 1000;
+	y1 = height * 434 / 1000;
+	y2 = height * 442 / 1000;
+	float y3 = height * 454 / 1000;
+	float y4 = height * 462 / 1000;
+	disegnaBox.push_back({ x1, height * 454 / 1000 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 });
+	disegnaBox.push_back({ x1, height * 442 / 1000 });
+	disegnaBox.push_back({ x1, height * 442 / 1000 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 434 / 1000 });
+
+	disegnaBox.push_back({ x1, height * 454 / 1000 - 70 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 - 70 });
+	disegnaBox.push_back({ x1, height * 442 / 1000 - 70 });
+	disegnaBox.push_back({ x1, height * 442 / 1000 - 70 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 - 70 });
+	disegnaBox.push_back({ width * 806 / 1000, height * 434 / 1000 - 70 });
+
+	int size = disegnaBox.size() - coloreBox.size();
+
+	for (int i = 0; i < size; i++)
+		coloreBox.push_back({ 0.0, 0.0, 0.0, 0.8 });
+}
+
+void menuInit()
+{
+	//text
+	Text textMenuScore = createText(width * 200 / 1000, height * 780 / 1000, false, 4.0, true, "POINTS");
+	textMenu.push_back(textMenuScore);
+	Text textMenuScoreValue = createText(width * 270 / 1000, height * 780 / 1000, false, 4.0, true, "0");
+	textMenu.push_back(textMenuScoreValue);
+	Text textMenuLevel = createText(width * 370 / 1000, height * 780 / 1000, true, 4.0, true, "LEVEL");
+	textMenu.push_back(textMenuLevel);
+	Text textMenuUpgrade = createText(width * 440 / 1000, height * 780 / 1000, true, 4.0, true, "UPGRADE");
+	textMenu.push_back(textMenuUpgrade);
+	Text textMenuFirePower = createText(width * 200 / 1000, height * 700 / 1000, false, 4.0, true, "FIREPOWER");
+	textMenu.push_back(textMenuFirePower);
+	Text textMenuFirePowerLvl = createText(width * 370 / 1000, height * 700 / 1000, false, 4.0, true, "1");
+	textMenu.push_back(textMenuFirePowerLvl);
+	Text textMenuHealth = createText(width * 200 / 1000, height * 660 / 1000, false, 4.0, true, "HEALTH");
+	textMenu.push_back(textMenuHealth);
+	Text textMenuHealthLvl = createText(width * 370 / 1000, height * 660 / 1000, false, 4.0, true, "1");
+	textMenu.push_back(textMenuHealthLvl);
+	Text textMenuSpeed = createText(width * 200 / 1000, height * 620 / 1000, false, 4.0, true, "SPEED");
+	textMenu.push_back(textMenuSpeed);
+	Text textMenuSpeedLvl = createText(width * 370 / 1000, height * 620 / 1000, false, 4.0, true, "1");
+	textMenu.push_back(textMenuSpeedLvl);
+	Text textMenuAbilityPerks = createText(width * 310 / 1000, height * 525 / 1000, true, 6.0, true, "ABILITY PERKS");
+	textMenu.push_back(textMenuAbilityPerks);
+	Text textInfo = createText(width * 175 / 1000, height * 160 / 1000, false, 4.0, true, " "); //11
+	textMenu.push_back(textInfo);
+	Text textMenuConsumables = createText(width * 570 / 1000, height * 780 / 1000, false, 4.0, true, "CONSUMABLES");
+	textMenu.push_back(textMenuConsumables);
+	Text textMenuBomb = createText(width * 570 / 1000, height * 700 / 1000, false, 4.0, true, "BOMB");
+	textMenu.push_back(textMenuBomb);
+	Text textMenuBombNum = createText(width * 720 / 1000, height * 700 / 1000, false, 4.0, true, intToCharBuff(game.bombs));
+	textMenu.push_back(textMenuBombNum);
+	Text textMenuLife = createText(width * 570 / 1000, height * 660 / 1000, false, 4.0, true, "LIFE");
+	textMenu.push_back(textMenuLife);
+	Text textMenuLifeNum = createText(width * 720 / 1000, height * 660 / 1000, false, 4.0, true, intToCharBuff(game.lives));
+	textMenu.push_back(textMenuLifeNum);
+	Text textMenuQnt = createText(width * 710 / 1000, height * 780 / 1000, false, 4.0, true, "QNT.");
+	textMenu.push_back(textMenuQnt);
+	Text textMenuBuy = createText(width * 790 / 1000, height * 780 / 1000, false, 4.0, true, "BUY");
+	textMenu.push_back(textMenuBuy);
+	Text textMenuOptions = createText(width * 650 / 1000, height * 550 / 1000, true, 6.0, true, "OPTIONS");
+	textMenu.push_back(textMenuOptions);
+	Text textMenuMusic = createText(width * 570 / 1000, height * 450 / 1000, false, 4.0, true, "MUSIC");
+	textMenu.push_back(textMenuMusic);
+	Text textMenuSounds = createText(width * 570 / 1000, height * 350 / 1000, false, 4.0, true, "SOUNDS");
+	textMenu.push_back(textMenuSounds);
+
+	menuGraficheInit();
 }
 
 void distruggiNemico(int i)
@@ -948,6 +1091,39 @@ void unlockPerk()
 			disegnaPerks.push_back({ x1 + (xDiv * 13), y + yDiv });
 			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
 		}
+		if (game.unlockedPerks == 3)
+		{
+			int x1 = (width * 173 / 1000) + 260;
+			int x2 = (width * 247 / 1000) + 260;
+			int y1 = height * 360 / 1000;
+			int y2 = height * 380 / 1000;
+			int yDiv = (y - y2) / 2;
+			int xDiv = (x2 - x1) / 12;
+			disegnaPerks.push_back({ x1, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 13, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 26, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 39, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 52, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 58, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 64, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 70, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 76, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 82, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 88, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+			disegnaPerks.push_back({ x1 + 94, y });
+			colorePerks.push_back({ 1.0, 0.0, 0.0, 1.0 });
+		}
 		disegnaLucchetto.erase(disegnaLucchetto.begin(), disegnaLucchetto.begin() + 6);
 		coloreLucchetto.erase(coloreLucchetto.begin(), coloreLucchetto.begin() + 6);
 		disegnaArcoLucchetto.erase(disegnaArcoLucchetto.begin(), disegnaArcoLucchetto.begin() + 90);
@@ -982,7 +1158,7 @@ void checkCollisioni()
 			}
 		}
 		else {
-			
+
 
 			if (distance1 < (radiusN + radiusP)) // navicella colpita
 			{
@@ -1031,7 +1207,7 @@ void checkCollisioni()
 								c.x += k * proiettili.at(j).vel.x / checkTimes;
 								c.y += k * proiettili.at(j).vel.y / checkTimes;
 								float distance2 = sqrtf((c.x - b.x) * (c.x - b.x) + (c.y - b.y) * (c.y - b.y));
-								if (distance2 < radiusN) //nemico colpito
+								if (distance2 < (radiusN + scalaProiettile)) //nemico colpito
 								{
 									Nemico n = nemici.at(i);
 									playSoundEffect(1, "hit");
@@ -1157,7 +1333,7 @@ void disegnaNemico(int indice)
 			nemici.at(indice).nav.pts.push_back(p);
 			nemici.at(indice).nav.colors.push_back(n_colori[t]);
 		}
-		nemici.at(indice).nav.pts.push_back({ -raggi[t] * 1.1, 0.0});
+		nemici.at(indice).nav.pts.push_back({ -raggi[t] * 1.1, 0.0 });
 		nemici.at(indice).nav.colors.push_back(n_colori[t]);
 		nemici.at(indice).nav.pts.push_back({ -raggi[t] * 0.5, 0.0 });
 		nemici.at(indice).nav.colors.push_back(n_colori[t]);
@@ -1217,7 +1393,7 @@ void initStages() {
 	totWaveEnemies = 0;
 	totStageEnemies = 0;
 
-	g = { 0.0, 6, 2, false };
+	/*g = {0.0, 5, 2, false};		// TEST
 	w.groups.push_back(g);
 	totWaveEnemies += w.groups.at(c_groups).num;
 	c_groups++;
@@ -1230,6 +1406,15 @@ void initStages() {
 	c_groups = 0;
 	totWaveEnemies = 0;
 	w.groups.clear();
+
+	s.id = c_stages;
+	s.totEnemies = totStageEnemies;
+	stageFinal.push_back(s);
+	c_stages++;
+	c_waves = 0;
+	totStageEnemies = 0;
+	s.waves.clear();
+	game.totalStages = c_stages;*/
 
 	// S0 W0
 	g = { 1.0, 0, 3, false };
@@ -1436,6 +1621,228 @@ void initStages() {
 	c_waves = 0;
 	totStageEnemies = 0;
 	s.waves.clear();
+
+	// S2 W0
+	g = { 3, 4, 1, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W1
+	g = { 0.5, 4, 2, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W2
+	g = { 0.5, 4, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W3
+	g = { 0.5, 4, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W3
+	g = { 4.5, 5, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W4
+	g = { 3, 5, 6, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 3, 1, 3, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 3, 0, 6, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W5
+	g = { 3, 5, 8, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 3, 0, 6, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W6
+	g = { 3, 4, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 4.5, 0, 12, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 6.5, 1, 3, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 6.5, 5, 3, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 10, 4, 3, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 12, 3, 2, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W7
+	g = { 3, 6, 8, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 4, 0, 8, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 6.5, 1, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 9.5, 3, 5, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	// S2 W8
+	g = { 3, 1, 5, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 9.5, 6, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 10, 0, 4, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 15, 0, 8, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 15, 6, 5, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	g = { 19.5, 1, 5, false };
+	w.groups.push_back(g);
+	totWaveEnemies += w.groups.at(c_groups).num;
+	c_groups++;
+	w.id = c_waves;
+	w.totEnemies = totWaveEnemies;
+	w.stage = c_stages;
+	s.waves.push_back(w);
+	c_waves++;
+	totStageEnemies += totWaveEnemies;
+	c_groups = 0;
+	totWaveEnemies = 0;
+	w.groups.clear();
+
+	s.id = c_stages;
+	s.totEnemies = totStageEnemies;
+	stageFinal.push_back(s);
+	c_stages++;
+	c_waves = 0;
+	totStageEnemies = 0;
+	s.waves.clear();
 	game.totalStages = c_stages;
 
 	//STAMPA MAPPA
@@ -1551,6 +1958,10 @@ void initNemici(int num, int wave, int type)
 			n.cooldown = COOLDOWN5;
 			n.revolving = false;
 		}
+		if (n.type == 6)
+		{
+			n.cooldown = COOLDOWN6;
+		}
 		n.child = false;
 		nemici.push_back(n);
 	}
@@ -1595,32 +2006,49 @@ void initNemici(int num, int wave, int type)
 
 void endOfGame()
 {
+	int finalScore = game.score + game.points;
 	textPunteggio.clear();
-	snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
-	textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+	snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
 	gameOver = true;
-	std::cout << "------";
 }
 
 void reset()
 {
-	Game g = {};
-	g.stage = 0;
-	g.waveKills = 0;
-	g.stageKills = 0;
-	g.currentGroup = 0;
-	g.currentWave = 0;
-	g.currentStage = 0;
-	g.score = 0;
-	g.unlockedPerks = 0;
-	g.lives = 3;
-	g.bombs = 2;
-	g.health = 58;
-	g.maxHealth = INIT_HEALTH;
-	g.fp = 0;
-	g.h = 0;
-	g.s = 0;
-	g.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
+	game.stage = 0;
+	game.waveKills = 0;
+	game.stageKills = 0;
+	game.currentGroup = 0;
+	game.currentWave = 0;
+	game.currentStage = 0;
+	game.score = 0;
+	game.points = 0;
+	game.unlockedPerks = 0;
+	game.lives = 3;
+	game.bombs = 2;
+	game.health = 58;
+	game.maxHealth = INIT_HEALTH;
+	game.fp = 0;
+	game.h = 0;
+	game.s = 0;
+	std::stringstream ss;
+	ss << "UPGRADE FIREPOWER (COST " << costsFirePower[0] << ")";
+	textFirePower = stringToCharBuff(ss.str());
+	ss.clear();
+	ss.str(std::string());
+	ss << "UPGRADE HEALTH (COST " << costsHealth[0] << ")";
+	textHealth = stringToCharBuff(ss.str());
+	ss.clear();
+	ss.str(std::string());
+	ss << "UPGRADE SPEED (COST " << costsSpeed[0] << ")";
+	textSpeed = stringToCharBuff(ss.str());
+
+	game.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
+	game.cdmultiplier = 1;
+	oldTimeSinceStart = 0;
+	deltaPause = 0;
 	for (int i = 0; i < PERKS; i++)
 		hoverP[i] = false;
 	for (int i = 0; i < PERKS; i++)
@@ -1635,57 +2063,121 @@ void reset()
 	waitingBounties = false;
 	pause = false;
 	stopFlow = false;
+	player.pos = { width / 2, height / 2 };
+	player.scia.clear();
+
+
+	scalaGameOver = 100.0;
+	fattoreRiduzione = 0.01;
+	progressiveTranspGO = 0.0;
+	progressiveTranspPunteggio = 0.01;
+	textGameOver = createText2(width * 78 / 1000, height * 638 / 1000, true, scalaGameOver, true, "GAME OVER", { 1.0, 1.0, 1.0, 0.0 });
+	textPunteggio.clear();
+	snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+	disegnaBottoniGO.clear();
+	coloreBottoniGO.clear();
+	updateText2(&textGameOver, { 1.0, 1.0, 1.0, 0.0 }, textGameOver.scale, stringToCharBuff("GAME OVER"));
+	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 0.8, 0.0, 0.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.8, 0.0, 0.0, 0.0 }, width * 760 / 1000, width * 550 / 1000, height * 150 / 1000, height * 280 / 1000);
+	coloreContornoBGO.clear();
+	for (int i = 0; i < 16; i++)
+		coloreContornoBGO.push_back({ 1.0, 1.0, 1.0, 0.0 });
+	disegnaPerks.clear();
+	colorePerks.clear();
+	disegnaPerksT.clear();
+	colorePerks.clear();
+
+	disegnaBackgroundMenu.clear();
+	coloreBackgroundMenu.clear();
+	disegnaContornoMenu.clear();
+	coloreContornoMenu.clear();
+	disegnaBox.clear();
+	coloreBox.clear();
+	disegnaLucchetto.clear();
+	coloreArcoLucchetto.clear();
+	disegnaArcoLucchetto.clear();
+	coloreArcoLucchetto.clear();
+	menuGraficheInit();
+	stageFinal.clear();
+	initStages();
+
+	updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
+	updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
+	updateText(&textStatsBar.at(5), intToCharBuff(game.points));
+	updateText(&textStatsBar.at(8), intToCharBuff(game.score));
+
+	updateText(&textMenu.at(1), intToCharBuff(game.points));
+	updateText(&textMenu.at(5), intToCharBuff(game.fp + 1));
+	updateText(&textMenu.at(7), intToCharBuff(game.h + 1));
+	updateText(&textMenu.at(9), intToCharBuff(game.s + 1));
+	updateText(&textMenu.at(14), intToCharBuff(game.bombs));
+	updateText(&textMenu.at(16), intToCharBuff(game.lives));
+
+	postmortem3 = false;
+	postmortem2 = true;
+	postmortem_c = INVULNERABILITY * 2 / 5;
+	disegnaNav = true;
 }
 
 void checkStage() // cambio stage se nemici_per_stage locale raggiunto
 {
 	// PARTE NUOVA
-	Wave w = stageFinal.at(game.currentStage).waves.at(game.currentWave);
+	if (game.currentStage != game.totalStages)
+	{
+		Wave w = stageFinal.at(game.currentStage).waves.at(game.currentWave);
 
-	new_timestamp = glutGet(GLUT_ELAPSED_TIME);
-	int delta1 = oldTimeSinceStart - game.waveInitTimestamp;
-	int delta2 = new_timestamp - game.waveInitTimestamp;
-	bool atLeastOnce = false;
+		new_timestamp = glutGet(GLUT_ELAPSED_TIME);
+		int delta1 = oldTimeSinceStart - game.waveInitTimestamp;
+		int delta2 = new_timestamp - game.waveInitTimestamp;
+		bool atLeastOnce = false;
 
-	for (int i = 0; i < w.groups.size(); i++) // potrebbero esserci più gruppi che hanno un timestamp
-	{										  // contenuto tra old_t e new_t: ciclo sulla wave intera
-		Group g = w.groups.at(i);
-		if (delta1 < (g.time * 1000 + deltaPause) && delta2 >= (g.time * 1000 + deltaPause) &&
-			!g.spawned)
-		{
-			stageFinal.at(game.currentStage).waves.at(game.currentWave).groups.at(i).spawned = true;
-			initNemici(w.groups.at(i).num, game.currentWave, w.groups.at(i).type);
-			std::cout << "spawno gruppo: " << i << "\n";
+		for (int i = 0; i < w.groups.size(); i++) // potrebbero esserci più gruppi che hanno un timestamp
+		{										  // contenuto tra old_t e new_t: ciclo sulla wave intera
+			Group g = w.groups.at(i);
+			if (delta1 < (g.time * 1000 + deltaPause) && delta2 >= (g.time * 1000 + deltaPause) &&
+				!g.spawned)
+			{
+				stageFinal.at(game.currentStage).waves.at(game.currentWave).groups.at(i).spawned = true;
+				initNemici(w.groups.at(i).num, game.currentWave, w.groups.at(i).type);
+				std::cout << "spawno gruppo: " << i << "\n";
+			}
 		}
+
+		oldTimeSinceStart = new_timestamp;
+
+		// check fine wave
+		if (game.waveKills == stageFinal.at(game.currentStage).waves.at(game.currentWave).totEnemies) // se == al totale dell'ondata: ondata finita, c_waves++
+		{	// check fine stage
+			if (game.currentStage == 0 && game.currentWave == 0)
+			{
+				game.unlockedPerks++;
+				unlockPerk();
+			}
+			if (game.stageKills == stageFinal.at(game.currentStage).totEnemies) // totale nemici stage
+			{
+				game.currentStage++;
+				game.unlockedPerks++;
+				unlockPerk();
+				if (game.currentStage == 2 || game.currentStage == 5)
+					game.maxPerks++;
+				game.stageKills = 0;
+				game.currentWave = 0;
+			}
+			else
+			{
+				game.currentWave++;
+			}
+			game.waveKills = 0;
+			game.currentGroup = 0;
+			deltaPause = 0;
+			game.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
+			oldTimeSinceStart = game.waveInitTimestamp - 1;
+		}
+
 	}
-
-	oldTimeSinceStart = new_timestamp;
-
-	// check fine wave
-	if (game.waveKills == stageFinal.at(game.currentStage).waves.at(game.currentWave).totEnemies) // se == al totale dell'ondata: ondata finita, c_waves++
-	{	// check fine stage
-		if (game.stageKills == stageFinal.at(game.currentStage).totEnemies) // totale nemici stage
-		{
-			game.currentStage++;
-			game.unlockedPerks++;
-			unlockPerk();
-			if (game.currentStage == 2 || game.currentStage == 5)
-				game.maxPerks++;
-			game.stageKills = 0;
-			game.currentWave = 0;
-		}
-		else
-		{
-			game.currentWave++;
-		}
-		game.waveKills = 0;
-		game.currentGroup = 0;
-		deltaPause = 0;
-		game.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
-		oldTimeSinceStart = game.waveInitTimestamp - 1;
-	}
-
-
 	// check fine game
 	if (game.currentStage == game.totalStages)
 	{
@@ -1709,8 +2201,11 @@ void update(int a)
 			{
 				waitingBounties = true;
 				textPunteggio.clear();
-				snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
-				textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+				int finalScore = game.score + game.points;
+				snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
+				textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
+				textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
+				textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
 
 				// codice necessario solo se esiste un bottone rapido per testare le scritte di Game Over
 				scalaGameOver = 100.0;
@@ -1739,6 +2234,15 @@ void update(int a)
 				{
 					progressiveTranspPunteggio += 0.05;
 					updateText2(&textPunteggio.at(0), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(0).scale, buffer);
+					updateText2(&textPunteggio.at(1), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(1).scale, stringToCharBuff("PLAY AGAIN"));
+					updateText2(&textPunteggio.at(2), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(2).scale, stringToCharBuff("QUIT GAME"));
+					disegnaBottoniGO.clear();
+					coloreBottoniGO.clear();
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 0.8, 0.0, progressiveTranspPunteggio / 2 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+					disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.8, 0.0, 0.0, progressiveTranspPunteggio / 2 }, width * 760 / 1000, width * 550 / 1000, height * 150 / 1000, height * 280 / 1000);
+					coloreContornoBGO.clear();
+					for (int i = 0; i < 16; i++)
+						coloreContornoBGO.push_back({ 1.0, 1.0, 1.0, progressiveTranspPunteggio });
 				}
 				else
 					stopFlow = true;
@@ -1750,7 +2254,7 @@ void update(int a)
 		if (recharging)
 		{
 			int delta = glutGet(GLUT_ELAPSED_TIME) - cooldownStart;
-			if (delta > COOLDOWN)
+			if (delta > (COOLDOWN * game.cdmultiplier))
 				recharging = false;
 		}
 		if (mouseLeft_down)
@@ -1806,7 +2310,7 @@ void update(int a)
 			}
 		}
 
-		if (!gameOver)
+		if (!gameOver && !stopFlow)
 			checkStage();
 
 		updateNemici();
@@ -1947,7 +2451,8 @@ void update(int a)
 			player.vel4.dw = player.vel4.dw - (player.vel4.up * 0.8);
 			player.vel4.up = 0.0f;
 		}
-		player.angle = getAngle(player.pos, mouseInput) * 0.0174533;
+		if (!stopFlow)
+			player.angle = getAngle(player.pos, mouseInput) * 0.0174533;
 
 	}
 	c++;
@@ -2452,7 +2957,7 @@ void updateNemici()
 
 					// DISEGNO NEMICI
 					//genero VAO nemici
-					glGenVertexArrays(1, &nemici.at(nemici.size()-1).nav.VAO);
+					glGenVertexArrays(1, &nemici.at(nemici.size() - 1).nav.VAO);
 					glBindVertexArray(nemici.at(nemici.size() - 1).nav.VAO);
 					//vertici
 					glGenBuffers(1, &nemici.at(nemici.size() - 1).nav.VBO_Geom);
@@ -2527,9 +3032,14 @@ void mouseClickEvent(int button, int state, int x, int y)
 {
 	if (stopFlow)
 	{
-		// codice per cliccare le box "GIOCA ANCORA" o "ESCI"
-		// separato da tutto il resto e mutuamente esclusivo perché non dev'essere possibile sparare quando
-		// il gioco è finito
+		if (hoverPA)
+		{
+			reset();
+		}
+		else if (hoverQG)
+		{
+			exit(0);
+		}
 	}
 	else if (!postmortem1 && !postmortem3) {
 		mouseInput.x = x;
@@ -2607,6 +3117,11 @@ void mouseClickEvent(int button, int state, int x, int y)
 			{
 				game.points -= costLife;
 				game.lives++;
+				updateText(&textStatsBar.at(1), intToCharBuff(game.lives));
+				updateText(&textMenu.at(16), intToCharBuff(game.lives));
+				std::stringstream ss;
+				ss << "PURCHASE LIFE (COST " << costLife << ")";
+				textLife = stringToCharBuff(ss.str());
 			}
 		}
 		else if (hoverB)
@@ -2615,6 +3130,11 @@ void mouseClickEvent(int button, int state, int x, int y)
 			{
 				game.points -= costBomb;
 				game.bombs++;
+				updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
+				updateText(&textMenu.at(14), intToCharBuff(game.bombs));
+				std::stringstream ss;
+				ss << "PURCHASE BOMB (COST " << costBomb << ")";
+				textBomb = stringToCharBuff(ss.str());
 			}
 		}
 		else if (hoverP[0])
@@ -2657,20 +3177,22 @@ void mouseClickEvent(int button, int state, int x, int y)
 		{
 			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 			{
-				if (!game.perksActive[1] && game.numActivePerks < game.maxPerks)
+				if (!game.perksActive[2] && game.numActivePerks < game.maxPerks)
 				{
-					game.perksActive[1] = true;
+					game.perksActive[2] = true;
 					game.numActivePerks++;
+					game.cdmultiplier = 0.5;
 				}
-				else if (game.perksActive[1])
+				else if (game.perksActive[2])
 				{
-					game.perksActive[1] = false;
+					game.perksActive[2] = false;
 					game.numActivePerks--;
+					game.cdmultiplier = 1;
 				}
 
 			}
-			}
-		// if hoverP ... fare il sistema a slot con cap massimo
+		}
+		// if hoverP[3] hoverP[4] hoverP[5]
 	}
 }
 
@@ -2783,6 +3305,9 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 				pause = !pause;
 			}
 			break;
+		case '+':
+			game.maxPerks++;
+			break;
 		case ' ':
 			if (!postmortem1 && !postmortem3 && !pause)
 				if (game.bombs > 0 && sequenza_bomba == 0)
@@ -2790,6 +3315,7 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 					playSoundEffect(3, "bomb");
 					game.bombs--;
 					updateText(&textStatsBar.at(3), intToCharBuff(game.bombs));
+					updateText(&textMenu.at(14), intToCharBuff(game.bombs));
 					bombaPos = player.pos;
 					sequenza_bomba = 1;
 				}
@@ -2826,16 +3352,13 @@ void keyboardReleasedEvent(unsigned char key, int x, int y)
 
 void mouseDragEvent(int x, int y)
 {
-	if (!stopFlow)
-	{
-		mouseInput.x = x;
-		mouseInput.y = height - y;
-	}
+	mouseInput.x = x;
+	mouseInput.y = height - y;
 }
 
 void mousePassiveMotionEvent(int x, int y)
 {
-	if (!postmortem1 && !postmortem3 && !stopFlow)
+	if (!postmortem1)
 	{
 		mouseInput.x = x;
 		mouseInput.y = height - y;
@@ -2862,6 +3385,20 @@ void mousePassiveMotionEvent(int x, int y)
 			int x2_4 = width * 235 / 1000;
 			int y1_4 = height * 375 / 1000;
 			int y2_4 = height * 422 / 1000;
+			//buys
+			int x1_5 = width * 790 / 1000;
+			int x2_5 = width * 808 / 1000;
+			int y1_5 = height * 682 / 1000;
+			int y2_5 = height * 714 / 1000;
+			//crosses
+			int x1_6 = width * 792 / 1000;
+			int x2_6 = width * 807 / 1000;
+			int y1_6 = height * 695 / 1000;
+			int y2_6 = height * 702 / 1000;
+			int x1_7 = width * 797 / 1000;
+			int x2_7 = width * 802 / 1000;
+			int y1_7 = height * 685 / 1000;
+			int y2_7 = height * 712 / 1000;
 
 
 			if (mouseInput.x > width * 440 / 1000 && mouseInput.x < width * 458 / 1000
@@ -2888,12 +3425,22 @@ void mousePassiveMotionEvent(int x, int y)
 				updateText(&textMenu.at(11), textSpeed);
 				hoverS = true;
 			}
-			else if (false)
+			else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
+				&& mouseInput.y > height * 682 / 1000 && mouseInput.y < height * 714 / 1000)
 			{
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5, y2_5);
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6, y2_6);
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7, y2_7);
+				updateText(&textMenu.at(11), textBomb);
 				hoverB = true;
 			}
-			else if (false)
+			else if (mouseInput.x > width * 790 / 1000 && mouseInput.x < width * 808 / 1000
+				&& mouseInput.y >(height * 682 / 1000) - 30 && mouseInput.y < (height * 714 / 1000) - 30)
 			{
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0f, 1.0f, 1.0f, 1.0f }, x1_5, x2_5, y1_5 - 30, y2_5 - 30);
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_6, x2_6, y1_6 - 30, y2_6 - 30);
+				disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0f, 0.0f, 0.0f, 1.0f }, x1_7, x2_7, y1_7 - 30, y2_7 - 30);
+				updateText(&textMenu.at(11), textLife);
 				hoverL = true;
 			}
 			else if (mouseInput.x > width * 170 / 1000 && mouseInput.x < width * 250 / 1000
@@ -2938,18 +3485,14 @@ void mousePassiveMotionEvent(int x, int y)
 				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 				if (game.unlockedPerks >= 3)
-					updateText(&textMenu.at(11), stringToCharBuff("PENETRATING BULLETS"));
+					updateText(&textMenu.at(11), stringToCharBuff("DOUBLE TIME"));
 				else
 					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
 				hoverP[2] = true;
 			}
-			else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
+			else if (mouseInput.x > (width * 170 / 1000) && mouseInput.x < (width * 250 / 1000)
 				&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
 			{
-				x1_3 += 260;
-				x2_3 += 260;
-				x1_4 += 260;
-				x2_4 += 260;
 				y1_3 -= 120;
 				y2_3 -= 120;
 				y1_4 -= 120;
@@ -2959,7 +3502,7 @@ void mousePassiveMotionEvent(int x, int y)
 				//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 				//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 				if (game.unlockedPerks >= 4)
-					updateText(&textMenu.at(11), stringToCharBuff("DOUBLE TIME"));
+					updateText(&textMenu.at(11), stringToCharBuff("PENETRATING BULLETS"));
 				else
 					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
 				hoverP[3] = true;
@@ -2985,9 +3528,13 @@ void mousePassiveMotionEvent(int x, int y)
 					updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
 				hoverP[4] = true;
 			}
-			else if (mouseInput.x > width * 170 / 1000 && mouseInput.x < width * 250 / 1000
+			else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
 				&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
 			{
+				x1_3 += 260;
+				x2_3 += 260;
+				x1_4 += 260;
+				x2_4 += 260;
 				y1_3 -= 120;
 				y2_3 -= 120;
 				y1_4 -= 120;
@@ -3014,6 +3561,36 @@ void mousePassiveMotionEvent(int x, int y)
 				hoverL = false;
 				for (int i = 0; i < PERKS; i++)
 					hoverP[i] = false;
+			}
+		}
+		else if (gameOver && stopFlow) // Hover bottoni GAMEOVER
+		{
+			if (mouseInput.x > width * 240 / 1000 && mouseInput.x < width * 450 / 1000
+				&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+			{
+				disegnaBottoniGO.clear();
+				coloreBottoniGO.clear();
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 1.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+				hoverPA = true;
+			}
+			else if (mouseInput.x > width * 550 / 1000 && mouseInput.x < width * 760 / 1000
+				&& mouseInput.y > height * 150 / 1000 && mouseInput.y < height * 280 / 1000)
+			{
+				disegnaBottoniGO.clear();
+				coloreBottoniGO.clear();
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 1.0 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+				hoverQG = true;
+			}
+			else
+			{
+				disegnaBottoniGO.clear();
+				coloreBottoniGO.clear();
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.4 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
+				disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.4 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
+				hoverPA = false;
+				hoverQG = false;
 			}
 		}
 	}
@@ -3327,6 +3904,9 @@ void initShader(void)
 
 void init(void)
 {
+	postmortem2 = true;
+	postmortem_c = INVULNERABILITY * 3 / 5;
+
 	initStages();
 
 	game.stage = 0;
@@ -3345,10 +3925,11 @@ void init(void)
 	game.h = 0;
 	game.s = 0;
 	game.waveInitTimestamp = glutGet(GLUT_ELAPSED_TIME);
+	game.cdmultiplier = 1;
 	std::cout << "\ngame.waveInitTime: " << game.waveInitTimestamp << "\n";
 	menuInit();
 	statsBarInit();
-	gameOverTextInit();
+	gameOverInit();
 	quadratiPerkAttiveInit();
 	for (int i = 0; i < PERKS; i++)
 		hoverP[i] = false;
@@ -3370,6 +3951,14 @@ void init(void)
 	ss.str(std::string());
 	ss << "UPGRADE SPEED (COST " << costsSpeed[0] << ")";
 	textSpeed = stringToCharBuff(ss.str());
+	ss.clear();
+	ss.str(std::string());
+	ss << "PURCHASE BOMB (COST " << costBomb << ")";
+	textBomb = stringToCharBuff(ss.str());
+	ss.clear();
+	ss.str(std::string());
+	ss << "PURCHASE LIFE (COST " << costLife << ")";
+	textLife = stringToCharBuff(ss.str());
 
 	player.vel = { 0.0f, 0.0f };
 
@@ -3485,6 +4074,27 @@ void init(void)
 	glGenBuffers(1, &VBO_TPC);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_TPC);
 
+	//Genero un VAO per bottoni GameOver
+	glGenVertexArrays(1, &VAO_BGO);
+	glBindVertexArray(VAO_BGO);
+	//vertici
+	glGenBuffers(1, &VBO_BGO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
+	//colori
+	glGenBuffers(1, &VBO_BGOC);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_BGOC);
+
+
+	//Genero un VAO per i contorni dei bottoni GameOver
+	glGenVertexArrays(1, &VAO_CBGO);
+	glBindVertexArray(VAO_CBGO);
+	//vertici
+	glGenBuffers(1, &VBO_CBGO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_CBGO);
+	//colori
+	glGenBuffers(1, &VBO_CBGOC);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_CBGOC);
+
 
 	//Definisco il colore che verrà assegnato allo sfondo della finestra
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -3530,6 +4140,8 @@ void init(void)
 	//colori
 	glGenBuffers(1, &VBO_RSC);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_RSC);
+
+
 
 
 	Projection = ortho(0.0f, float(width), 0.0f, float(height));
@@ -3606,7 +4218,7 @@ void drawScene(void)
 	glBufferData(GL_ARRAY_BUFFER, coloriProiettili.size() * sizeof(vec4), coloriProiettili.data(), GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
-	glLineWidth(2.0f);
+	glLineWidth(scalaProiettile);
 	glDrawArrays(GL_LINES, 0, proiettili.size() * 2);
 	glBindVertexArray(0);
 
@@ -3974,7 +4586,7 @@ void drawScene(void)
 		glBindVertexArray(0);
 	}
 
-	// disegna testo gameOver
+	// disegna sequenza gameOver
 	if (gameOver)
 	{
 
@@ -4005,6 +4617,40 @@ void drawScene(void)
 				glBindVertexArray(0);
 			}
 		}
+
+
+		// disegna triangoli bottoni gameover
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glBindVertexArray(VAO_BGO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
+		glBufferData(GL_ARRAY_BUFFER, disegnaBottoniGO.size() * sizeof(vec2), disegnaBottoniGO.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGOC);
+		glBufferData(GL_ARRAY_BUFFER, coloreBottoniGO.size() * sizeof(vec4), coloreBottoniGO.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glLineWidth(2.0f);
+		glDrawArrays(GL_TRIANGLES, 0, disegnaBottoniGO.size());
+		glBindVertexArray(0);
+
+
+		// disegna contorni bottoni gameover
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glBindVertexArray(VAO_CBGO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_BGO);
+		glBufferData(GL_ARRAY_BUFFER, disegnaContornoBGO.size() * sizeof(vec2), disegnaContornoBGO.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_CBGOC);
+		glBufferData(GL_ARRAY_BUFFER, coloreContornoBGO.size() * sizeof(vec4), coloreContornoBGO.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glLineWidth(2.0f);
+		glDrawArrays(GL_LINES, 0, disegnaContornoBGO.size());
+		glBindVertexArray(0);
 
 		for (int i = 0; i < textPunteggio.size(); i++)
 		{
