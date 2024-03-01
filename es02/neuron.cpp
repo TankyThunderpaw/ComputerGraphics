@@ -298,7 +298,6 @@ bool disegnaNav = true;
 int intermittenza = 5;
 bool pause = false;
 bool stopFlow = false;
-bool mainMenu = true;
 bool frameSkipperBlueN = false;
 float sogliaScia = 1.0;
 int sequenza_bomba = 0;
@@ -309,6 +308,8 @@ bool hoverH = false;
 bool hoverS = false;
 bool hoverB = false;
 bool hoverL = false;
+bool hoverC = false;
+bool hoverPMM = false;
 bool hoverPA = false;
 bool hoverQG = false;
 bool hoverP[PERKS];
@@ -368,6 +369,16 @@ GLuint VAO_BMB, VBO_BMB, VBO_BMBC;
 vec2 bombaPos;
 
 //strutture per grafica
+
+//croce chiusura
+std::vector<vec2> disegnaX;
+std::vector<vec4> coloreX;
+GLuint VAO_X, VBO_X, VBO_XC;
+std::vector<vec2> disegnaXL;
+std::vector<vec4> coloreXL;
+GLuint VAO_XL, VBO_XL, VBO_XLC;
+
+//main menu
 std::vector<vec2> disegnaMainMenu;
 std::vector<vec4> coloreMainMenu;
 GLuint VAO_MM, VBO_MM, VBO_MMC;
@@ -375,18 +386,42 @@ std::vector<vec2> disegnaMainMenuL;
 std::vector<vec4> coloreMainMenuL;
 GLuint VAO_MML, VBO_MML, VBO_MMLC;
 std::vector<Text> textMainMenu;
+bool mainMenu = true;
+
+//controls window
+std::vector<vec2> disegnaControls;
+std::vector<vec4> coloreControls;
+GLuint VAO_CW, VBO_CW, VBO_CWC;
+std::vector<vec2> disegnaControlsL;
+std::vector<vec4> coloreControlsL;
+GLuint VAO_CWL, VBO_CWL, VBO_CWLC;
+std::vector<Text> textInstructions;
+bool controls = false;
+
+//credits window
+std::vector<vec2> disegnaCredits;
+std::vector<vec4> coloreCredits;
+GLuint VAO_C, VBO_C, VBO_CC;
+std::vector<vec2> disegnaCreditsL;
+std::vector<vec4> coloreCreditsL;
+GLuint VAO_CL, VBO_CL, VBO_CLC;
+std::vector<Text> textCredits;
+
+//statsBar
 std::vector<vec2> disegnaStatsBar;
 std::vector<vec4> coloreStatsBar;
 GLuint VAO_SB, VBO_SB, VBO_SBC;
 std::vector<vec2> disegnaHealthBar;
 std::vector<vec4> coloreHealthBar;
 GLuint VAO_HB, VBO_HB, VBO_HBC;
+
+//menu Window
 std::vector<vec2> disegnaBackgroundMenu;
 std::vector<vec4> coloreBackgroundMenu;
 GLuint VAO_M, VBO_M, VBO_MC;
 std::vector<vec2> disegnaContornoMenu;
 std::vector<vec4> coloreContornoMenu;
-GLuint VAO_C, VBO_C, VBO_CC;
+GLuint VAO_CM, VBO_CM, VBO_CMC;
 std::vector<vec2> disegnaLucchetto;
 std::vector<vec4> coloreLucchetto;
 GLuint VAO_L, VBO_L, VBO_LC;
@@ -405,6 +440,9 @@ GLuint VAO_B, VBO_B, VBO_BC;
 std::vector<vec2> disegnaHover;
 std::vector<vec4> coloreHover;
 GLuint VAO_H, VBO_H, VBO_HC;
+std::vector<vec2> disegnaHoverL;
+std::vector<vec4> coloreHoverL;
+GLuint VAO_HL, VBO_HL, VBO_HLC;
 std::vector<Text> textMenu;
 std::vector<Text> textStatsBar;
 Text textGameOver;
@@ -730,6 +768,16 @@ void initMainMenu()
 	disegnaContornoRettangolo(&disegnaMainMenuL, &coloreMainMenuL, { 1.0, 1.0, 1.0, 0.7 }, x1, x2, y1 - yInc1 * 4, y2 - yInc1 * 4);
 }
 
+void creditsInit()
+{
+
+}
+
+void instructionsInit()
+{
+
+}
+
 void gameOverInit()
 {
 	//text
@@ -737,7 +785,7 @@ void gameOverInit()
 	snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
-	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.0 }));
 	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 1.0, 0.0, 0.0 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
 	disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 1.0, 0.0, 0.0, 0.0 }, width * 550 / 1000, width * 760 / 1000, height * 150 / 1000, height * 280 / 1000);
 	disegnaContornoBGO.push_back({ width * 240 / 1000, height * 150 / 1000 });
@@ -799,16 +847,7 @@ void menuGraficheInit()
 		width * 15 / 100, width * 85 / 100, height * 10 / 100, height * 85 / 100);
 
 	//contorno menu
-	disegnaContornoMenu.push_back({ width * 15 / 100, height * 85 / 100 });
-	disegnaContornoMenu.push_back({ width * 15 / 100, height * 10 / 100 });
-	disegnaContornoMenu.push_back({ width * 85 / 100, height * 10 / 100 });
-	disegnaContornoMenu.push_back({ width * 85 / 100, height * 85 / 100 });
-	disegnaContornoMenu.push_back({ width * 15 / 100, height * 85 / 100 });
-
-	for (int i = 0; i < disegnaContornoMenu.size(); i++)
-	{
-		coloreContornoMenu.push_back({ 1.0f, 1.0f, 1.0f, 0.8f });
-	}
+	disegnaContornoRettangolo(&disegnaContornoMenu, &coloreContornoMenu, { 1.0f, 1.0f, 1.0f, 0.8f }, width * 15 / 100, width * 85 / 100, height * 10 / 100, height * 85 / 100);
 
 	//boxes
 	float x1 = width * 170 / 1000;
@@ -943,51 +982,59 @@ void menuGraficheInit()
 	// disegna quadrati volume
 	x1 = width * 790 / 1000;
 	x2 = width * 808 / 1000;
-	y1 = height * 432 / 1000;
-	y2 = height * 464 / 1000;
+	y1 = height * 460 / 1000;
+	y2 = height * 492 / 1000; //+32
 	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
 
-	y1 -= 70;
-	y2 -= 70;
+	y1 -= 55;
+	y2 -= 55;
 	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0f, 1.0f, 1.0f, 0.8f }, x1, x2, y1, y2);
 
 
 	// disegna simboli volume
 	x1 = width * 793 / 1000;
 	x2 = width * 798 / 1000;
-	y1 = height * 442 / 1000;
-	y2 = height * 454 / 1000;
+	y1 = height * 470 / 1000; //+10^
+	y2 = height * 482 / 1000; //+12
 	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
 
-	y1 -= 70;
-	y2 -= 70;
+	y1 -= 55;
+	y2 -= 55;
 	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0f, 0.0f, 0.0f, 0.8f }, x1, x2, y1, y2);
 
 
 	x1 = width * 798 / 1000;
 	x2 = width * 806 / 1000;
-	y1 = height * 434 / 1000;
-	y2 = height * 442 / 1000;
-	float y3 = height * 454 / 1000;
-	float y4 = height * 462 / 1000;
-	disegnaBox.push_back({ x1, height * 454 / 1000 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 });
-	disegnaBox.push_back({ x1, height * 442 / 1000 });
-	disegnaBox.push_back({ x1, height * 442 / 1000 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 434 / 1000 });
+	y1 = height * 462 / 1000;
+	y2 = height * 470 / 1000;
+	float y3 = height * 482 / 1000;
+	float y4 = height * 490 / 1000;
+	disegnaBox.push_back({ x1, y3 });
+	disegnaBox.push_back({ x2, y4 });
+	disegnaBox.push_back({ x1, y2 });
+	disegnaBox.push_back({ x1, y2 });
+	disegnaBox.push_back({ x2, y4 });
+	disegnaBox.push_back({ x2, y1 });
 
-	disegnaBox.push_back({ x1, height * 454 / 1000 - 70 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 - 70 });
-	disegnaBox.push_back({ x1, height * 442 / 1000 - 70 });
-	disegnaBox.push_back({ x1, height * 442 / 1000 - 70 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 462 / 1000 - 70 });
-	disegnaBox.push_back({ width * 806 / 1000, height * 434 / 1000 - 70 });
+	disegnaBox.push_back({ x1, y3 - 55 });
+	disegnaBox.push_back({ x2, y4 - 55 });
+	disegnaBox.push_back({ x1, y2 - 55 });
+	disegnaBox.push_back({ x1, y2 - 55 });
+	disegnaBox.push_back({ x2, y4 - 55 });
+	disegnaBox.push_back({ x2, y1 - 55 });
 
 	int size = disegnaBox.size() - coloreBox.size();
 
 	for (int i = 0; i < size; i++)
 		coloreBox.push_back({ 0.0, 0.0, 0.0, 0.8 });
+
+	//bottone Controls
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 0.0, 0.0, 1.0, 0.5 }, width * 650 / 1000, width * 810 / 1000, height * 250 / 1000, height * 330 / 1000);
+	disegnaContornoRettangolo(&disegnaContornoMenu, &coloreContornoMenu, { 1.0, 1.0, 1.0, 0.5 }, width * 650 / 1000, width * 810 / 1000, height * 250 / 1000, height * 330 / 1000);
+
+	//bottone MainMenu
+	disegnaRettangolo(&disegnaBox, &coloreBox, { 1.0, 0.0, 0.0, 0.5 }, width * 650 / 1000, width * 810 / 1000, height * 150 / 1000, height * 230 / 1000);
+	disegnaContornoRettangolo(&disegnaContornoMenu, &coloreContornoMenu, { 1.0, 1.0, 1.0, 0.5 }, width * 650 / 1000, width * 810 / 1000, height * 150 / 1000, height * 230 / 1000);
 }
 
 void menuInit()
@@ -1033,10 +1080,14 @@ void menuInit()
 	textMenu.push_back(textMenuBuy);
 	Text textMenuOptions = createText(width * 650 / 1000, height * 550 / 1000, true, 6.0, true, "OPTIONS");
 	textMenu.push_back(textMenuOptions);
-	Text textMenuMusic = createText(width * 570 / 1000, height * 450 / 1000, false, 4.0, true, "MUSIC");
+	Text textMenuMusic = createText(width * 570 / 1000, height * 475 / 1000, false, 4.0, true, "MUSIC");
 	textMenu.push_back(textMenuMusic);
-	Text textMenuSounds = createText(width * 570 / 1000, height * 350 / 1000, false, 4.0, true, "SOUNDS");
+	Text textMenuSounds = createText(width * 570 / 1000, height * 400 / 1000, false, 4.0, true, "SOUNDS");
 	textMenu.push_back(textMenuSounds);
+	Text textMenuCTRL = createText2(width * 693 / 1000, height * 290 / 1000, false, 4.5, true, "CONTROLS", { 1.0, 1.0, 1.0, 0.5 });
+	textMenu.push_back(textMenuCTRL);
+	Text textMenuMM = createText2(width * 687 / 1000, height * 190 / 1000, false, 4.5, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.5 });
+	textMenu.push_back(textMenuMM);
 
 	menuGraficheInit();
 }
@@ -2071,7 +2122,7 @@ void endOfGame()
 	snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
-	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.0 }));
 	gameOver = true;
 }
 
@@ -2136,7 +2187,7 @@ void reset()
 	snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
-	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.0 }));
 	disegnaBottoniGO.clear();
 	coloreBottoniGO.clear();
 	updateText2(&textGameOver, { 1.0, 1.0, 1.0, 0.0 }, textGameOver.scale, stringToCharBuff("GAME OVER"));
@@ -2178,7 +2229,7 @@ void reset()
 
 	postmortem3 = false;
 	postmortem2 = true;
-	postmortem_c = INVULNERABILITY * 2 / 5;
+	postmortem_c = INVULNERABILITY * 3 / 5;
 	disegnaNav = true;
 }
 
@@ -2271,7 +2322,7 @@ void update(int a)
 					snprintf(buffer, 32, "TOTAL SCORE: %5d", finalScore);
 					textPunteggio.push_back(createText2(width * 280 / 1000, height * 425 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
 					textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
-					textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "QUIT GAME", { 1.0, 1.0, 1.0, 0.0 }));
+					textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.0 }));
 
 					// codice necessario solo se esiste un bottone rapido per testare le scritte di Game Over
 					scalaGameOver = 100.0;
@@ -2301,7 +2352,7 @@ void update(int a)
 						progressiveTranspPunteggio += 0.05;
 						updateText2(&textPunteggio.at(0), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(0).scale, buffer);
 						updateText2(&textPunteggio.at(1), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(1).scale, stringToCharBuff("PLAY AGAIN"));
-						updateText2(&textPunteggio.at(2), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(2).scale, stringToCharBuff("QUIT GAME"));
+						updateText2(&textPunteggio.at(2), { 1.0, 1.0, 1.0, progressiveTranspPunteggio }, textPunteggio.at(2).scale, stringToCharBuff("MAIN MENU"));
 						disegnaBottoniGO.clear();
 						coloreBottoniGO.clear();
 						disegnaRettangolo(&disegnaBottoniGO, &coloreBottoniGO, { 0.0, 0.8, 0.0, progressiveTranspPunteggio / 2 }, width * 240 / 1000, width * 450 / 1000, height * 150 / 1000, height * 280 / 1000);
@@ -3117,7 +3168,7 @@ void mouseClickEvent(int button, int state, int x, int y)
 			}
 			else if (hoverQG)
 			{
-				exit(0);
+				mainMenu = true;
 			}
 		}
 		else if (!postmortem1 && !postmortem3) {
@@ -3272,6 +3323,12 @@ void mouseClickEvent(int button, int state, int x, int y)
 				}
 			}
 			// if hoverP[3] hoverP[4] hoverP[5]
+			else if (hoverC)
+			{
+
+			}
+			else if (hoverPMM)
+				mainMenu = true;
 		}
 	}
 }
@@ -3715,16 +3772,39 @@ void mousePassiveMotionEvent(int x, int y)
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
 					hoverP[5] = true;
 				}
+				else if (mouseInput.x > width * 650 / 1000 && mouseInput.x < width * 810 / 1000
+					&& mouseInput.y > height * 250 / 1000 && mouseInput.y < height * 330 / 1000)
+				{
+					//bottone Controls
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 0.0, 0.0, 1.0, 1.0 }, width * 650 / 1000, width * 810 / 1000, height * 250 / 1000, height * 330 / 1000);
+					disegnaContornoRettangolo(&disegnaHoverL, &coloreHoverL, { 1.0, 1.0, 1.0, 1.0 }, width * 650 / 1000, width * 810 / 1000, height * 250 / 1000, height * 330 / 1000);
+					updateText2(&textMenu.at(22), { 1.0, 1.0, 1.0, 1.0 }, 4.5, stringToCharBuff("CONTROLS"));
+					hoverC = true;
+				}
+				else if (mouseInput.x > width * 650 / 1000 && mouseInput.x < width * 810 / 1000
+					&& mouseInput.y >  height * 150 / 1000 && mouseInput.y < height * 230 / 1000)
+				{
+					disegnaRettangolo(&disegnaHover, &coloreHover, { 1.0, 0.0, 0.0, 1.0 }, width * 650 / 1000, width * 810 / 1000, height * 150 / 1000, height * 230 / 1000);
+					disegnaContornoRettangolo(&disegnaHoverL, &coloreHoverL, { 1.0, 1.0, 1.0, 1.0 }, width * 650 / 1000, width * 810 / 1000, height * 150 / 1000, height * 230 / 1000);
+					updateText2(&textMenu.at(23), { 1.0, 1.0, 1.0, 1.0 }, textMenu.at(23).scale, stringToCharBuff("MAIN MENU"));
+					hoverPMM = true;
+				}
 				else
 				{
+					updateText2(&textMenu.at(22), { 1.0, 1.0, 1.0, 5.0 }, 4.5, stringToCharBuff("CONTROLS"));
+					updateText2(&textMenu.at(23), { 1.0, 1.0, 1.0, 5.0 }, 4.5, stringToCharBuff("MAIN MENU"));
 					disegnaHover.clear();
 					coloreHover.clear();
+					disegnaHoverL.clear();
+					coloreHoverL.clear();
 					updateText(&textMenu.at(11), stringToCharBuff(" "));
 					hoverFP = false;
 					hoverH = false;
 					hoverS = false;
 					hoverB = false;
 					hoverL = false;
+					hoverC = false;
+					hoverPMM = false;
 					for (int i = 0; i < PERKS; i++)
 						hoverP[i] = false;
 				}
@@ -4212,7 +4292,7 @@ void init(void)
 	glGenBuffers(1, &VBO_HBC);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_HBC);
 
-	//Genero un VAO hover
+	//Genero un VAO hover triangoli
 	glGenVertexArrays(1, &VAO_H);
 	glBindVertexArray(VAO_H);
 	//vertici
@@ -4221,6 +4301,16 @@ void init(void)
 	//colori
 	glGenBuffers(1, &VBO_HC);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_HC);
+
+	//Genero un VAO hover linee
+	glGenVertexArrays(1, &VAO_HL);
+	glBindVertexArray(VAO_HL);
+	//vertici
+	glGenBuffers(1, &VBO_HL);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_HL);
+	//colori
+	glGenBuffers(1, &VBO_HLC);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_HLC);
 
 	//Genero un VAO perks
 	glGenVertexArrays(1, &VAO_DP);
@@ -4685,7 +4775,7 @@ void drawScene(void)
 			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 			glEnableVertexAttribArray(1);
 			glLineWidth(2.0f);
-			glDrawArrays(GL_LINE_STRIP, 0, disegnaContornoMenu.size());
+			glDrawArrays(GL_LINES, 0, disegnaContornoMenu.size());
 			glBindVertexArray(0);
 
 			// disegna box menu
@@ -4735,6 +4825,38 @@ void drawScene(void)
 			glLineWidth(2.0f);
 			glDrawArrays(GL_TRIANGLES, 0, disegnaArcoLucchetto.size());
 			glBindVertexArray(0);
+						
+			// disegna triangoli hovered
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_H);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_H);
+			glBufferData(GL_ARRAY_BUFFER, disegnaHover.size() * sizeof(vec2), disegnaHover.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_HC);
+			glBufferData(GL_ARRAY_BUFFER, coloreHover.size() * sizeof(vec4), coloreHover.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_TRIANGLES, 0, disegnaHover.size());
+			glBindVertexArray(0);
+
+			// disegna linee hovered
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(VAO_HL);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_HL);
+			glBufferData(GL_ARRAY_BUFFER, disegnaHoverL.size() * sizeof(vec2), disegnaHoverL.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_HLC);
+			glBufferData(GL_ARRAY_BUFFER, coloreHoverL.size() * sizeof(vec4), coloreHoverL.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINES, 0, disegnaHoverL.size());
+			glBindVertexArray(0);
 
 			// disegna testo menu
 			for (int i = 0; i < textMenu.size(); i++)
@@ -4774,22 +4896,6 @@ void drawScene(void)
 					}
 				}
 			}
-
-			// disegna box hovered
-			Model = mat4(1.0);
-			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-			glBindVertexArray(VAO_H);
-			glBindBuffer(GL_ARRAY_BUFFER, VBO_H);
-			glBufferData(GL_ARRAY_BUFFER, disegnaHover.size() * sizeof(vec2), disegnaHover.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, VBO_HC);
-			glBufferData(GL_ARRAY_BUFFER, coloreHover.size() * sizeof(vec4), coloreHover.data(), GL_STATIC_DRAW);
-			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(1);
-			glLineWidth(2.0f);
-			glDrawArrays(GL_TRIANGLES, 0, disegnaHover.size());
-			glBindVertexArray(0);
 
 			for (int i = 0; i < quadratiPerks.size(); i++)
 			{
