@@ -230,6 +230,8 @@ typedef struct {
 	std::vector<glm::vec2> scia; //particellare
 	std::vector<glm::vec2> puntiScia;
 	std::vector<glm::vec4> coloreScia;
+	std::vector<glm::vec2> puntiScia2;
+	std::vector<glm::vec4> coloreScia2;
 	GLuint VAO_S;
 	GLuint VBO_S;
 	GLuint VBO_SC;
@@ -298,6 +300,7 @@ bool disegnaNav = true;
 int intermittenza = 5;
 bool pause = false;
 bool stopFlow = false;
+bool showTrails = false;
 bool frameSkipperBlueN = false;
 float sogliaScia = 1.0;
 int sequenza_bomba = 0;
@@ -337,7 +340,6 @@ typedef struct {
 	vec2 pos2;	   // B
 	vec2 pastPos;  // last B position
 	vec2 vel;
-	vec2 comps;
 	int id;
 	int flag;
 	float angle;
@@ -467,6 +469,7 @@ void disegnaCirconferenza(std::vector<vec2>* resPts, std::vector<vec4>* resCol, 
 void disegnaCoronaCircolare(std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec2 center, vec4 coloursIxt, vec4 coloursEnt, float inRadius, float exRadius, int numTrian, float degreeRange, float degreeOffset);
 void updateScie();
 void disegnaScia(std::vector<vec2> scia, std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec4 colours, float bigRadius, float lowRadius, int numTrian, Vel4 vel);
+void disegnaLineeScia(std::vector<vec2> scia, std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec4 colours, float bigRadius, float lowRadius, int numTrian, Vel4 vel);
 void updateHealthBar(float newVal);
 void initNemici(int num, int wave, int type);
 void fuoco();
@@ -1504,7 +1507,7 @@ void initStages() {
 	totWaveEnemies = 0;
 	totStageEnemies = 0;
 
-	/*g = {0.0, 5, 2, false};		// TEST
+	/*g = {0.0, 1, 1, false};		// TEST
 	w.groups.push_back(g);
 	totWaveEnemies += w.groups.at(c_groups).num;
 	c_groups++;
@@ -2124,6 +2127,7 @@ void endOfGame()
 	textPunteggio.push_back(createText2(width * 280 / 1000, height * 215 / 1000, false, 6.0, true, "PLAY AGAIN", { 1.0, 1.0, 1.0, 0.0 }));
 	textPunteggio.push_back(createText2(width * 600 / 1000, height * 215 / 1000, false, 6.0, true, "MAIN MENU", { 1.0, 1.0, 1.0, 0.0 }));
 	gameOver = true;
+	mouseLeft_down = false;
 }
 
 void reset()
@@ -2229,7 +2233,7 @@ void reset()
 
 	postmortem3 = false;
 	postmortem2 = true;
-	postmortem_c = INVULNERABILITY * 3 / 5;
+	postmortem_c = INVULNERABILITY * 2 / 5;
 	disegnaNav = true;
 }
 
@@ -2374,7 +2378,7 @@ void update(int a)
 				if (delta > (COOLDOWN * game.cdmultiplier))
 					recharging = false;
 			}
-			if (mouseLeft_down)
+			if (mouseLeft_down && !gameOver)
 				fuoco();
 
 			if (sequenza_bomba > 0)
@@ -2600,6 +2604,8 @@ void updateScie()
 		//draw player scia
 		player.puntiScia.clear();
 		player.coloreScia.clear();
+		player.puntiScia2.clear();
+		player.coloreScia2.clear();
 
 		radius = nav_raggio * player.scale;
 
@@ -2612,6 +2618,9 @@ void updateScie()
 		{
 			disegnaScia(player.scia, &player.puntiScia, &player.coloreScia, { 1.0, 1.0, 1.0, 0.5f }, bigRadius, lowRadius, 60, player.vel4);
 			disegnaScia(player.scia, &player.puntiScia, &player.coloreScia, { 1.0, 1.0, 1.0, 0.2f }, bigRadius - 3, lowRadius - 3, 60, player.vel4);
+			if (showTrails)
+				disegnaLineeScia(player.scia, &player.puntiScia2, &player.coloreScia2, { 1.0, 0.0, 0.0, 1.0 }, bigRadius, lowRadius, 10, player.vel4);
+
 		}
 	}
 
@@ -2632,6 +2641,8 @@ void updateScie()
 		//draw nemici scia
 		nemici.at(i).nav.puntiScia.clear();
 		nemici.at(i).nav.coloreScia.clear();
+		nemici.at(i).nav.puntiScia2.clear();
+		nemici.at(i).nav.coloreScia2.clear();
 
 		Nemico n = nemici.at(i);
 		if (n.type == 2) // disegno particolare nemici di tipo 2 (doppio colore
@@ -2660,6 +2671,8 @@ void updateScie()
 			Vel4 v = { vel.x, vel.y, vel.x, vel.y };
 			disegnaScia(nemici.at(i).nav.scia, &nemici.at(i).nav.puntiScia, &nemici.at(i).nav.coloreScia, n_colore2, bigRadius, lowRadius, 60, v);
 			disegnaScia(nemici.at(i).nav.scia, &nemici.at(i).nav.puntiScia, &nemici.at(i).nav.coloreScia, n_colore3, bigRadius - 3, lowRadius - 3, 60, v);
+			if (showTrails)
+				disegnaLineeScia(nemici.at(i).nav.scia, &nemici.at(i).nav.puntiScia2, &nemici.at(i).nav.coloreScia2, { 1.0, 0.0, 0.0, 1.0 }, bigRadius, lowRadius, 10, v);
 		}
 	}
 	temp.clear();
@@ -3366,6 +3379,8 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 				reset();
 				break;
 			case 'r': // solo per finalità di test
+				showTrails = !showTrails;
+				/*
 				if (gameOver)
 				{
 					gameOver = false;
@@ -3381,7 +3396,7 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 					snprintf(buffer, 32, "TOTAL SCORE: %5d", game.score);
 					textPunteggio.push_back(createText2(width * 280 / 1000, height * 400 / 1000, false, 10.0, true, buffer, { 1.0, 1.0, 1.0, 0.0 }));
 					gameOver = true;
-				}
+				}*/
 				break;
 			case 't': // solo per finalità di test
 				playSoundEffect(3, "bomb");
@@ -3438,7 +3453,7 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 				unlockPerk();
 				break;
 			case 'p':
-				if (!postmortem3)
+				if (!postmortem3 && !gameOver)
 				{
 					if (!pause)
 						pauseStartTimestamp = glutGet(GLUT_ELAPSED_TIME);
@@ -3674,10 +3689,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 1)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("REDUCED SIZE"));
+						hoverP[0] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[0] = true;
 				}
 				else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
 					&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
@@ -3691,10 +3708,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 2)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("BOUNCING BULLETS"));
+						hoverP[1] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[1] = true;
 				}
 				else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
 					&& mouseInput.y > height * 355 / 1000 && mouseInput.y < height * 485 / 1000)
@@ -3708,10 +3727,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 3)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("DOUBLE TIME"));
+						hoverP[2] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[2] = true;
 				}
 				else if (mouseInput.x > (width * 170 / 1000) && mouseInput.x < (width * 250 / 1000)
 					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
@@ -3725,10 +3746,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 4)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("PENETRATING BULLETS"));
+						hoverP[3] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[3] = true;
 				}
 				else if (mouseInput.x > (width * 170 / 1000) + 130 && mouseInput.x < (width * 250 / 1000) + 130
 					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
@@ -3746,10 +3769,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 5)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("EXPLOSIVE BULLETS"));
+						hoverP[4] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[4] = true;
 				}
 				else if (mouseInput.x > (width * 170 / 1000) + 260 && mouseInput.x < (width * 250 / 1000) + 260
 					&& mouseInput.y >(height * 355 / 1000) - 120 && mouseInput.y < (height * 485 / 1000) - 120)
@@ -3767,10 +3792,12 @@ void mousePassiveMotionEvent(int x, int y)
 					//disegnaCoronaCircolare(&disegnaHover, &coloreHover, { (float)(x1_4 + x2_4) / 2, (float)y2_4 },
 					//	{ 0.0, 0.0, 0.0, 1.0f }, { 0.0, 0.0, 0.0, 1.0f }, (float)width / 45, (float)width / 60, 30, PI, 0.0f);
 					if (game.unlockedPerks >= 6)
+					{
 						updateText(&textMenu.at(11), stringToCharBuff("TIME ALTER"));
+						hoverP[5] = true;
+					}
 					else
 						updateText(&textMenu.at(11), stringToCharBuff("LOCKED"));
-					hoverP[5] = true;
 				}
 				else if (mouseInput.x > width * 650 / 1000 && mouseInput.x < width * 810 / 1000
 					&& mouseInput.y > height * 250 / 1000 && mouseInput.y < height * 330 / 1000)
@@ -3842,6 +3869,281 @@ void mousePassiveMotionEvent(int x, int y)
 		}
 	}
 	glutPostRedisplay();
+}
+
+void disegnaLineeScia(std::vector<vec2> scia, std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec4 colours, float bigRadius, float lowRadius, int numTrian, Vel4 vel)
+{
+	vec4 transp_col = { colours.r, colours.g, colours.b, 0.0f };
+	float step = (PI * 2) / numTrian;
+
+	//disegna cerchio
+	if (scia.size() == 1)
+	{
+		for (int i = 0; i < numTrian; i++)
+		{
+			//ex
+			vec2 p0 = { scia.at(0).x + bigRadius * cos((double)i * step), scia.at(0).y + bigRadius * sin((double)i * step) };
+			resPts->push_back(p0);
+			resCol->push_back(transp_col);
+
+			vec2 p1 = { scia.at(0).x + bigRadius * cos((double)(i + 1) * step), scia.at(0).y + bigRadius * sin((double)(i + 1) * step) };
+			resPts->push_back(p1);
+			resCol->push_back(transp_col);
+
+			vec2 p2 = { scia.at(0).x + bigRadius * cos((double)(i + 1) * step), scia.at(0).y + bigRadius * sin((double)(i + 1) * step) };
+			resPts->push_back(p2);
+			resCol->push_back(transp_col);
+
+			//in
+			vec2 p3 = { scia.at(0).x + 0 * cos((double)i * step), scia.at(0).y + 0 * sin((double)i * step) };
+			resPts->push_back(p3);
+			resCol->push_back(colours);
+
+			vec2 p4 = { scia.at(0).x + 0 * cos((double)i * step), scia.at(0).y + 0 * sin((double)i * step) };
+			resPts->push_back(p4);
+			resCol->push_back(colours);
+
+			vec2 p5 = { scia.at(0).x + 0 * cos((double)(i + 1) * step), scia.at(0).y + 0 * sin((double)(i + 1) * step) };
+			resPts->push_back(p5);
+			resCol->push_back(colours);
+		}
+	}
+
+	// disegna scia composta
+	if (scia.size() > 2)
+	{
+		//disegna primo semicerchio
+		float angle = getAngle(scia.at(0), scia.at(1)) * 0.0174533;
+		float start = numTrian / (PI * 2) * (getAngle(scia.at(0), scia.at(1)) * 0.0174533 + PI / 2);
+		float end = numTrian / 2 + start;
+		if (vel.up == 0.0 && vel.dx == 0.0 &&
+			vel.dw == 0.0 && vel.sx == 0.0)
+			end = numTrian + start;
+		for (int i = start; i < end - 0.5; i++)
+		{
+			//ex
+			vec2 p0 = { scia.at(0).x + bigRadius * cos((double)i * step), scia.at(0).y + bigRadius * sin((double)i * step) };
+			resPts->push_back(p0);//0
+			resCol->push_back(colours);
+
+			vec2 p1 = { scia.at(0).x + bigRadius * cos((double)(i + 1) * step), scia.at(0).y + bigRadius * sin((double)(i + 1) * step) };
+			resPts->push_back(p1);//1
+			resCol->push_back(colours);
+			resPts->push_back(p1);//1
+			resCol->push_back(colours);
+
+			vec2 p3 = { scia.at(0).x, scia.at(0).y };
+			resPts->push_back(p3);//3
+			resCol->push_back(colours);
+			resPts->push_back(p3);//3
+			resCol->push_back(colours);
+			resPts->push_back(p0);//0
+			resCol->push_back(colours);
+		}
+
+		step = (bigRadius - lowRadius) / scia.size();
+		vec2 midPoint = { (scia.at(0).x + scia.at(1).x) / 2, (scia.at(0).y + scia.at(1).y) / 2 };
+		angle = angle - (PI / 2);
+		float compX = (bigRadius * cos(angle));
+		float compY = (bigRadius * sin(angle));
+		vec2 upPoint;
+		vec2 downPoint;
+		vec2 lastUp = { midPoint.x + compX, midPoint.y + compY };
+		vec2 lastDown = { midPoint.x - compX, midPoint.y - compY };
+		int j = 1;
+		for (int i = 0; i < scia.size() - 1; i+=2)
+		{
+			/*/if (getDistance(scia.at(i), scia.at(j)) < sogliaScia)
+			{
+
+			}*/
+			if (i == 0) //prima iterazione +12punti
+			{
+
+				//first rectangle triangle
+				//up
+				resPts->push_back(scia.at(0));//60
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(0).x + compX, scia.at(0).y + compY });//61
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(0).x + compX, scia.at(0).y + compY });//61
+				resCol->push_back(colours);
+				resPts->push_back(lastUp);//62
+				resCol->push_back(colours);
+				resPts->push_back(lastUp);//62
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(0));//60
+				resCol->push_back(colours);
+				//down
+				resPts->push_back(scia.at(0));//63
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(0).x - compX, scia.at(0).y - compY });//64
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(0).x - compX, scia.at(0).y - compY });//64
+				resCol->push_back(colours);
+				resPts->push_back(lastDown);//65
+				resCol->push_back(colours);
+				resPts->push_back(lastDown);//65
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(0));//63
+				resCol->push_back(colours);
+
+				//triangle
+				//up
+				resPts->push_back(scia.at(0));//66
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(1));//67
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(1));//67
+				resCol->push_back(colours);
+				resPts->push_back(lastUp);//68
+				resCol->push_back(colours);
+				resPts->push_back(lastUp);//68
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(0));//66
+				resCol->push_back(colours);
+				//down
+				resPts->push_back(scia.at(0));//69
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(1));//70
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(1));//70
+				resCol->push_back(colours);
+				resPts->push_back(lastDown);//71
+				resCol->push_back(colours);
+				resPts->push_back(lastDown);//71
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(0));//69
+				resCol->push_back(colours);
+			}
+			else
+			{
+				midPoint = { (scia.at(i).x + scia.at(i + 1).x) / 2, (scia.at(i).y + scia.at(i + 1).y) / 2 };
+				angle = getAngle(scia.at(i), scia.at(i + 1)) * 0.0174533 - (PI / 2);
+				compX = (bigRadius - (step * i)) * cos(angle);
+				compY = (bigRadius - (step * i)) * sin(angle);
+				upPoint = { midPoint.x + compX, midPoint.y + compY };
+				downPoint = { midPoint.x - compX, midPoint.y - compY };
+
+				//first triangle
+				//up
+				resPts->push_back(lastUp);//18+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//19+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//19+i*12
+				resCol->push_back(colours);
+				resPts->push_back(upPoint);//20+i*12
+				resCol->push_back(colours);
+				resPts->push_back(upPoint);//20+i*12
+				resCol->push_back(colours);
+				resPts->push_back(lastUp);//18+i*12
+				resCol->push_back(colours);
+				//down
+				resPts->push_back(lastDown);//21+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//22+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//22+i*12
+				resCol->push_back(colours);
+				resPts->push_back(downPoint);//23+i*12
+				resCol->push_back(colours);
+				resPts->push_back(downPoint);//23+i*12
+				resCol->push_back(colours);
+				resPts->push_back(lastDown);//21+i*12
+				resCol->push_back(colours);
+
+				//second triangle
+				//up
+				resPts->push_back(scia.at(i));//24+i*12
+				resCol->push_back(colours);
+				resPts->push_back(upPoint);//25+i*12
+				resCol->push_back(colours);
+				resPts->push_back(upPoint);//25+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i + 1));//26+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i + 1));//26+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//24+i*12
+				resCol->push_back(colours);
+				//down
+				resPts->push_back(scia.at(i));//27+i*12
+				resCol->push_back(colours);
+				resPts->push_back(downPoint);//28+i*12
+				resCol->push_back(colours);
+				resPts->push_back(downPoint);//28+i*12
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(i + 1) });//29+i*12
+				resCol->push_back(colours);
+				resPts->push_back({ scia.at(i + 1) });//29+i*12
+				resCol->push_back(colours);
+				resPts->push_back(scia.at(i));//27+i*12
+				resCol->push_back(colours);
+
+				lastUp = upPoint;
+				lastDown = downPoint;
+			}
+		}
+		//last rectangle triangle
+		//up
+		resPts->push_back(upPoint);
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1).x + compX,  scia.at(scia.size() - 1).y + compY });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1).x + compX,  scia.at(scia.size() - 1).y + compY });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1) });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1) });
+		resCol->push_back(colours);
+		resPts->push_back(upPoint);
+		resCol->push_back(colours);
+		//down
+		resPts->push_back(downPoint);
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1).x - compX,  scia.at(scia.size() - 1).y - compY });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1).x - compX,  scia.at(scia.size() - 1).y - compY });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1) });
+		resCol->push_back(colours);
+		resPts->push_back({ scia.at(scia.size() - 1) });
+		resCol->push_back(colours);
+		resPts->push_back(downPoint);
+		resCol->push_back(colours);
+
+
+		//disegna secondo semicerchio
+		step = (PI * 2) / numTrian;
+		start = numTrian / (PI * 2) * angle;
+		end = numTrian / 2 + start;
+		if (vel.up == 0.0 && vel.dx == 0.0 &&
+			vel.dw == 0.0 && vel.sx == 0.0)
+			end = start;
+		for (int i = start; i < end - 0.5; i++)
+		{
+			//ex
+			vec2 p0 = { scia.at(scia.size() - 1).x + lowRadius * cos((double)i * step), scia.at(scia.size() - 1).y + lowRadius * sin((double)i * step) };
+			resPts->push_back(p0);
+			resCol->push_back(colours);
+
+			vec2 p1 = { scia.at(scia.size() - 1).x + lowRadius * cos((double)(i + 1) * step), scia.at(scia.size() - 1).y + lowRadius * sin((double)(i + 1) * step) };
+			resPts->push_back(p1);
+			resCol->push_back(colours);
+			resPts->push_back(p1);
+			resCol->push_back(colours);
+
+			//in
+			vec2 p3 = { scia.at(scia.size() - 1).x, scia.at(scia.size() - 1).y };
+			resPts->push_back(p3);
+			resCol->push_back(colours);
+			resPts->push_back(p3);
+			resCol->push_back(colours);
+			resPts->push_back(p0);
+			resCol->push_back(colours);
+		}
+	}
 }
 
 void disegnaScia(std::vector<vec2> scia, std::vector<vec2>* resPts, std::vector<vec4>* resCol, vec4 colours, float bigRadius, float lowRadius, int numTrian, Vel4 vel)
@@ -4631,6 +4933,22 @@ void drawScene(void)
 			glEnableVertexAttribArray(1);
 			glLineWidth(2.0f);
 			glDrawArrays(GL_TRIANGLES, 0, nemici.at(i).nav.puntiScia.size());
+			glBindVertexArray(0);			
+
+			//disegna scia nemico
+			Model = mat4(1.0);
+			glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+			glBindVertexArray(nemici.at(i).nav.VAO_S);
+			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_S);
+			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.puntiScia2.size() * sizeof(vec2), nemici.at(i).nav.puntiScia2.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, nemici.at(i).nav.VBO_SC);
+			glBufferData(GL_ARRAY_BUFFER, nemici.at(i).nav.coloreScia2.size() * sizeof(vec4), nemici.at(i).nav.coloreScia2.data(), GL_STATIC_DRAW);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINES, 0, nemici.at(i).nav.puntiScia2.size());
 			glBindVertexArray(0);
 
 		}
