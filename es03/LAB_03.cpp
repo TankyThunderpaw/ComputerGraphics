@@ -3,7 +3,7 @@ LAB 03
 Gestione interattiva di una scena 3D mediante controllo da mouse e da tastiera.
 I modelli geometrici in scena sono mesh poligonali in formato *.obj
 
-TRL+WHEEL = pan orizzontale della telecamera
+CTRL+WHEEL = pan orizzontale della telecamera
 SHIFT+WHEEL = pan verticale della telecamera
 WHEEL = se navigazione  --> ZOOM IN/OUT
 		se modify       --> agisce sulla trasformazione dell'oggetto
@@ -39,7 +39,7 @@ based on the OpenGL Shading Language (GLSL) specifications.
 #define CTRL_WHEEL_UP 19
 #define CTRL_WHEEL_DOWN 20
 
-#define NUM_SHADERS 9
+//#define NUM_SHADERS 9
 
 using namespace std;
 
@@ -63,7 +63,9 @@ typedef enum {
 	EMERALD,
 	BRASS,
 	SLATE,
-	NO_MATERIAL
+	AQUAMARINE,
+	NO_MATERIAL,
+	NUM_MATERIALS
 } MaterialType;
 
 typedef struct {
@@ -78,16 +80,18 @@ typedef enum { // used also as index, don't modify order
 	GOURAUD,
 	PHONG,
 	BLINN,
-	TOON,
 	PASS_THROUGH,
-	WAVE
+	WAVE,
+	TOON,
+	GLITCH,
+	NUM_SHADERS
 } ShadingType;
 
 typedef struct {
 	Mesh mesh;
 	MaterialType material;
 	ShadingType shading;
-	glm::mat4 M;
+	glm::mat4 M;	// model matrix
 	string name;
 } Object;
 
@@ -114,12 +118,14 @@ static Object Axis, Grid;
 static vector<Object> objects;
 static vector<Material> materials;
 static int selected_obj = 0;
+vector<glm::vec3> distances;
 
 // Materiali disponibili
 glm::vec3 red_plastic_ambient = { 0.1, 0.0, 0.0 }, red_plastic_diffuse = { 0.6, 0.1, 0.1 }, red_plastic_specular = { 0.7, 0.6, 0.6 }; GLfloat red_plastic_shininess = 32.0f;
 glm::vec3 brass_ambient = { 0.1, 0.06, 0.015 }, brass_diffuse = { 0.78, 0.57, 0.11 }, brass_specular = { 0.99, 0.91, 0.81 }; GLfloat brass_shininess = 27.8f;
 glm::vec3 emerald_ambient = { 0.0215, 0.04745, 0.0215 }, emerald_diffuse = { 0.07568, 0.61424, 0.07568 }, emerald_specular = { 0.633, 0.727811, 0.633 }; GLfloat emerald_shininess = 78.8f;
 glm::vec3 slate_ambient = { 0.02, 0.02, 0.02 }, slate_diffuse = { 0.1, 0.1, 0.1 }, slate_specular{ 0.4, 0.4, 0.4 }; GLfloat slate_shininess = 1.78125f;
+glm::vec3 aquamarine_ambient = { 0.0, 0.1, 0.06 }, aquamarine_diffuse = { 0.0, 0.50980392f,0.50980392f }, aquamarine_specular = { 0.50196078f,0.50196078f,0.50196078f }; GLfloat aquamarine_shininess = 32.0f;
 
 typedef struct {
 	glm::vec3 position;
@@ -174,6 +180,8 @@ enum {
 static bool moving_trackball = 0;
 static int last_mouse_pos_Y;
 static int last_mouse_pos_X;
+
+bool space_bar = false;
 
 //Shaders Uniforms 
 static vector<LightShaderUniform> light_uniforms; // for shaders with light
@@ -234,6 +242,7 @@ void init_light_object() {
 	obj.name = "light";
 	obj.M = glm::scale(glm::translate(glm::mat4(1), light.position), glm::vec3(0.2, 0.2, 0.2));
 	objects.push_back(obj);
+	distances.push_back(obj.M[3]);
 }
 
 void init_waving_plane() {
@@ -243,26 +252,77 @@ void init_waving_plane() {
 	// Object Setup use the light shader and a material for color and light behavior
 	Object obj4 = {};
 	obj4.mesh = sphereS;
-	obj4.material = MaterialType::BRASS;
-	obj4.shading = ShadingType::GOURAUD;// WAVE;
+	obj4.material = MaterialType::AQUAMARINE;
+	obj4.shading = ShadingType::WAVE;
+	//obj4.shading = ShadingType::GOURAUD;// WAVE;
 	obj4.name = "Waves";
 	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., -2., 0.)), glm::vec3(8., 8., 8.));
 	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
 }
 
-void init_mesh() {
-	Mesh sphereS = {};
+void init_airplane() {
+	Mesh airplane = {};
 	//	loadObjFile(MeshDir + "airplane.obj", &sphereS);
-	loadObjFile(MeshDir + "bunny.obj", &sphereS);
-	generate_and_load_buffers(true, &sphereS);
+	loadObjFile(MeshDir + "airplane.obj", &airplane);
+	generate_and_load_buffers(true, &airplane);
 	// Object Setup use the light shader and a material for color and light behavior
 	Object obj4 = {};
-	obj4.mesh = sphereS;
-	obj4.material = MaterialType::RED_PLASTIC; // NO_MATERIAL;
-	obj4.shading = ShadingType::PHONG; // GOURAUD; // TOON;
+	obj4.mesh = airplane;
+	obj4.material = MaterialType::RED_PLASTIC;
+	obj4.shading = ShadingType::TOON;
+	obj4.name = "Airplane";
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_bunny() {
+	Mesh bunny = {};
+	//	loadObjFile(MeshDir + "airplane.obj", &sphereS);
+	loadObjFile(MeshDir + "bunny.obj", &bunny);
+	generate_and_load_buffers(true, &bunny);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = bunny;
+	obj4.material = MaterialType::RED_PLASTIC;
+	obj4.shading = ShadingType::TOON;
 	obj4.name = "Bunny";
 	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
 	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_wgs() {
+	Mesh wgs = {};
+	//	loadObjFile(MeshDir + "airplane.obj", &sphereS);
+	loadObjFile(MeshDir + "Wolf's Gravestone.obj", &wgs);
+	generate_and_load_buffers(true, &wgs);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = wgs;
+	obj4.material = MaterialType::RED_PLASTIC; // NO_MATERIAL;
+	obj4.shading = ShadingType::GOURAUD;
+	obj4.name = "Wolf's Gravestone";
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_slenderman() {
+	Mesh slenderman = {};
+	//	loadObjFile(MeshDir + "airplane.obj", &sphereS);
+	loadObjFile(MeshDir + "slenderman.obj", &slenderman);
+	generate_and_load_buffers(true, &slenderman);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = slenderman;
+	obj4.material = MaterialType::BRASS; // NO_MATERIAL;
+	obj4.shading = ShadingType::GLITCH; // GOURAUD; // TOON;
+	obj4.name = "Slenderman";
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(0.03, 0.03, 0.03));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
 }
 
 
@@ -278,6 +338,7 @@ void init_sphere_FLAT() {
 	obj3.name = "Sphere FLAT";
 	obj3.M = glm::translate(glm::mat4(1), glm::vec3(3., 0., -6.));
 	objects.push_back(obj3);
+	distances.push_back(obj3.M[3]);
 }
 
 void init_sphere_SMOOTH() {
@@ -292,6 +353,7 @@ void init_sphere_SMOOTH() {
 	obj4.name = "Sphere SMOOTH";
 	obj4.M = glm::translate(glm::mat4(1), glm::vec3(6., 0., -3.));
 	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
 }
 
 void init_axis() {
@@ -320,12 +382,11 @@ void init_grid() {
 	Grid = obj1;
 }
 
-
 void initShader()
 {
 	// SHADERS configuration section
 	shaders_IDs.resize(NUM_SHADERS);
-	light_uniforms.resize(5); // allocate space for uniforms of PHONG, BLINN and GOURAND + TOON
+	light_uniforms.resize(NUM_SHADERS); // allocate space for uniforms of PHONG, BLINN and GOURAND + TOON
 	base_uniforms.resize(NUM_SHADERS); // allocate space for uniforms of PHONG,BLINN,GOURAND,TOON,WAVE
 
 	//Gourand Shader loading
@@ -395,10 +456,6 @@ void initShader()
 	glUniform3f(light_uniforms[BLINN].light_color_pointer, light.color.r, light.color.g, light.color.b);
 	glUniform1f(light_uniforms[BLINN].light_power_pointer, light.power);
 
-	//Wave Shader Loading
-	//TODO
-	//TOON Shader Loading
-	//TODO
 	//Pass-Through Shader loading
 	shaders_IDs[PASS_THROUGH] = createProgram(ShaderDir + "v_passthrough.glsl", ShaderDir + "f_passthrough.glsl");
 	//Otteniamo i puntatori alle variabili uniform per poterle utilizzare in seguito
@@ -408,6 +465,62 @@ void initShader()
 	base_uniforms[ShadingType::PASS_THROUGH] = base_unif;
 	glUseProgram(shaders_IDs[PASS_THROUGH]);
 	glUniform4fv(glGetUniformLocation(shaders_IDs[PASS_THROUGH], "Color"), 1, value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0)));
+	
+	//Wave Shader Loading
+	shaders_IDs[WAVE] = createProgram(ShaderDir + "v_wave.glsl", ShaderDir + "f_gouraud.glsl");
+	base_unif.P_Matrix_pointer = glGetUniformLocation(shaders_IDs[WAVE], "P");
+	base_unif.V_Matrix_pointer = glGetUniformLocation(shaders_IDs[WAVE], "V");
+	base_unif.M_Matrix_pointer = glGetUniformLocation(shaders_IDs[WAVE], "M");
+	base_unif.time_delta_pointer = glGetUniformLocation(shaders_IDs[WAVE], "time");
+	base_uniforms[ShadingType::WAVE] = base_unif;
+	light_unif.material_ambient = glGetUniformLocation(shaders_IDs[WAVE], "material.ambient");
+	light_unif.material_diffuse = glGetUniformLocation(shaders_IDs[WAVE], "material.diffuse");
+	light_unif.material_specular = glGetUniformLocation(shaders_IDs[WAVE], "material.specular");
+	light_unif.material_shininess = glGetUniformLocation(shaders_IDs[WAVE], "material.shininess");
+	light_unif.light_position_pointer = glGetUniformLocation(shaders_IDs[WAVE], "light.position");
+	light_unif.light_color_pointer = glGetUniformLocation(shaders_IDs[WAVE], "light.color");
+	light_unif.light_power_pointer = glGetUniformLocation(shaders_IDs[WAVE], "light.power");
+	light_uniforms[ShadingType::WAVE] = light_unif;
+	//Rendiamo attivo lo shader
+	glUseProgram(shaders_IDs[WAVE]);
+	//Shader uniforms initialization
+	glUniform3f(light_uniforms[WAVE].light_position_pointer, light.position.x, light.position.y, light.position.z);
+	glUniform3f(light_uniforms[WAVE].light_color_pointer, light.color.r, light.color.g, light.color.b);
+	glUniform1f(light_uniforms[WAVE].light_power_pointer, light.power);	
+
+	//TOON Shader Loading
+	shaders_IDs[TOON] = createProgram(ShaderDir + "v_toon.glsl", ShaderDir + "f_toon.glsl");
+	//Otteniamo i puntatori alle variabili uniform per poterle utilizzare in seguito
+	base_unif.P_Matrix_pointer = glGetUniformLocation(shaders_IDs[TOON], "P");
+	base_unif.V_Matrix_pointer = glGetUniformLocation(shaders_IDs[TOON], "V");
+	base_unif.M_Matrix_pointer = glGetUniformLocation(shaders_IDs[TOON], "M");
+	base_uniforms[ShadingType::TOON] = base_unif;
+	light_unif.light_position_pointer = glGetUniformLocation(shaders_IDs[TOON], "lightPosition");
+	light_uniforms[ShadingType::TOON] = light_unif;
+	//Rendiamo attivo lo shader
+	glUseProgram(shaders_IDs[TOON]);
+	//Shader uniforms initialization
+	glUniform3f(light_uniforms[TOON].light_position_pointer, light.position.x, light.position.y, light.position.z);
+	glUniform4fv(glGetUniformLocation(shaders_IDs[TOON], "Color"), 1, value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0)));
+
+
+	//GLITCH Shader Loading
+	shaders_IDs[GLITCH] = createProgram(ShaderDir + "v_glitch.glsl", ShaderDir + "f_glitch.glsl");
+	//Otteniamo i puntatori alle variabili uniform per poterle utilizzare in seguito
+	base_unif.P_Matrix_pointer = glGetUniformLocation(shaders_IDs[GLITCH], "P");
+	base_unif.V_Matrix_pointer = glGetUniformLocation(shaders_IDs[GLITCH], "V");
+	base_unif.M_Matrix_pointer = glGetUniformLocation(shaders_IDs[GLITCH], "M");
+	base_unif.time_delta_pointer = glGetUniformLocation(shaders_IDs[GLITCH], "time");
+	base_uniforms[ShadingType::GLITCH] = base_unif;
+	light_uniforms[ShadingType::GLITCH] = light_unif;
+	//Rendiamo attivo lo shader
+	glUseProgram(shaders_IDs[GLITCH]);
+	//Shader uniforms initialization
+	glUniform3f(light_uniforms[GLITCH].light_position_pointer, light.position.x, light.position.y, light.position.z);
+	glUniform4fv(glGetUniformLocation(shaders_IDs[GLITCH], "Color"), 1, value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0)));
+	GLint resolutionLocation = glGetUniformLocation(shaders_IDs[GLITCH], "resolution");
+	glUniform2f(resolutionLocation, WindowWidth, WindowHeight);
+
 }
 
 void init() {
@@ -423,7 +536,7 @@ void init() {
 	light.power = 1.f;
 
 	// Materials setup
-	materials.resize(5);
+	materials.resize(NUM_MATERIALS);
 	materials[MaterialType::RED_PLASTIC].name = "Red Plastic";
 	materials[MaterialType::RED_PLASTIC].ambient = red_plastic_ambient;
 	materials[MaterialType::RED_PLASTIC].diffuse = red_plastic_diffuse;
@@ -447,6 +560,12 @@ void init() {
 	materials[MaterialType::SLATE].diffuse = slate_diffuse;
 	materials[MaterialType::SLATE].specular = slate_specular;
 	materials[MaterialType::SLATE].shininess = slate_shininess;
+
+	materials[MaterialType::AQUAMARINE].name = "Aquamarine";
+	materials[MaterialType::AQUAMARINE].ambient = aquamarine_ambient;
+	materials[MaterialType::AQUAMARINE].diffuse = aquamarine_diffuse;
+	materials[MaterialType::AQUAMARINE].specular = aquamarine_specular;
+	materials[MaterialType::AQUAMARINE].shininess = aquamarine_shininess;
 
 	materials[MaterialType::NO_MATERIAL].name = "NO_MATERIAL";
 	materials[MaterialType::NO_MATERIAL].ambient = glm::vec3(1, 1, 1);
@@ -486,8 +605,17 @@ void init() {
 	// Waving plane
 	init_waving_plane();
 
+	//Bunny model with TOON SHADING
+	init_bunny();
+
 	//Airplane model with TOON SHADING
-	init_mesh();
+	init_airplane();
+
+	//Wolf's Gravestone model with RED_PLASTIC material and gouraud shading
+	init_wgs();
+
+	//Slenderman model with GLITCH SHADING
+	init_slenderman();
 }
 
 void drawScene() {
@@ -530,11 +658,6 @@ void drawScene() {
 			glUniform3fv(light_uniforms[BLINN].material_specular, 1, glm::value_ptr(materials[objects[i].material].specular));
 			glUniform1f(light_uniforms[BLINN].material_shininess, materials[objects[i].material].shininess);
 			break;
-		case ShadingType::TOON:
-			glUseProgram(shaders_IDs[TOON]);
-			// Caricamento matrice trasformazione del modello
-			glUniformMatrix4fv(base_uniforms[TOON].M_Matrix_pointer, 1, GL_FALSE, value_ptr(objects[i].M));
-			break;
 		case ShadingType::PASS_THROUGH:
 			glUseProgram(shaders_IDs[PASS_THROUGH]);
 			// Caricamento matrice trasformazione del modello
@@ -546,6 +669,23 @@ void drawScene() {
 			glUniformMatrix4fv(base_uniforms[WAVE].M_Matrix_pointer, 1, GL_FALSE, value_ptr(objects[i].M));
 			// Time setting
 			glUniform1f(base_uniforms[WAVE].time_delta_pointer, clock());
+			// Material loading
+			glUniform3fv(light_uniforms[WAVE].material_ambient, 1, glm::value_ptr(materials[objects[i].material].ambient));
+			glUniform3fv(light_uniforms[WAVE].material_diffuse, 1, glm::value_ptr(materials[objects[i].material].diffuse));
+			glUniform3fv(light_uniforms[WAVE].material_specular, 1, glm::value_ptr(materials[objects[i].material].specular));
+			glUniform1f(light_uniforms[WAVE].material_shininess, materials[objects[i].material].shininess);
+			break;
+		case ShadingType::TOON:
+			glUseProgram(shaders_IDs[TOON]);
+			// Caricamento matrice trasformazione del modello
+			glUniformMatrix4fv(base_uniforms[TOON].M_Matrix_pointer, 1, GL_FALSE, value_ptr(objects[i].M));
+			break;
+		case ShadingType::GLITCH:
+			glUseProgram(shaders_IDs[GLITCH]);
+			// Caricamento matrice trasformazione del modello
+			glUniformMatrix4fv(base_uniforms[GLITCH].M_Matrix_pointer, 1, GL_FALSE, value_ptr(objects[i].M));
+			// Time setting
+			glUniform1f(base_uniforms[GLITCH].time_delta_pointer, clock());
 			break;
 		default:
 			break;
@@ -630,6 +770,8 @@ void mouseClick(int button, int state, int x, int y)
 
 	glm::vec4 axis;
 	float amount = 0.01f;
+	if (space_bar)
+		amount *= 10;
 	// Imposto il valore della trasformazione
 	switch (button) {
 	case 3:// scroll wheel up
@@ -712,9 +854,18 @@ void mouseActiveMotion(int x, int y)
 	glutPostRedisplay();
 }
 
+void keyboardUp(unsigned char key, int x, int y)
+{
+	if (key == ' ')
+		space_bar = false;
+}
+
 void keyboardDown(unsigned char key, int x, int y)
 {
 	switch (key) {
+	case ' ':
+		space_bar = true;
+		break;
 		// Selezione della modalità di trasformazione
 	case 'g':
 		OperationMode = TRASLATING;
@@ -794,6 +945,7 @@ void buildOpenGLMenu()
 	glutAddMenuEntry(materials[MaterialType::EMERALD].name.c_str(), MaterialType::EMERALD);
 	glutAddMenuEntry(materials[MaterialType::BRASS].name.c_str(), MaterialType::BRASS);
 	glutAddMenuEntry(materials[MaterialType::SLATE].name.c_str(), MaterialType::SLATE);
+	glutAddMenuEntry(materials[MaterialType::AQUAMARINE].name.c_str(), MaterialType::AQUAMARINE);
 
 	glutCreateMenu(main_menu_func); // richiama main_menu_func() alla selezione di una voce menu
 	glutAddMenuEntry("Opzioni", -1); //-1 significa che non si vuole gestire questa riga
@@ -835,12 +987,18 @@ void moveCameraBack()
 
 void moveCameraLeft()
 {
-	//TODO
+	glm::vec3 direction = ViewSetup.target - ViewSetup.position;
+	glm::vec3 slide = glm::cross(direction, glm::vec3(ViewSetup.upVector)) * CAMERA_TRASLATION_SPEED;
+	ViewSetup.position -= glm::vec4(slide, 0.0);
+	ViewSetup.target -= glm::vec4(slide, 0.0);
 }
 
 void moveCameraRight()
 {
-	//TODO
+	glm::vec3 direction = ViewSetup.target - ViewSetup.position;
+	glm::vec3 slide = glm::cross(direction, glm::vec3(ViewSetup.upVector)) * CAMERA_TRASLATION_SPEED;
+	ViewSetup.position += glm::vec4(slide, 0.0);
+	ViewSetup.target += glm::vec4(slide, 0.0);
 }
 
 void moveCameraUp()
@@ -863,7 +1021,44 @@ void moveCameraDown()
 
 void modifyModelMatrix(glm::vec3 translation_vector, glm::vec3 rotation_vector, GLfloat angle, GLfloat scale_factor)
 {
+	glm::mat4 M = objects[selected_obj].M;
+
 	//TODO 
+
+	//TRANSLATION
+	M = glm::translate(M, translation_vector);
+
+	//ROTATION
+	if (angle != 0)
+	{
+		if (TransformMode == OCS)
+		{
+			M = glm::rotate(M, glm::radians(angle), rotation_vector);
+		}
+		else if (TransformMode == WCS)
+		{
+			M = glm::translate(M, -distances.at(selected_obj));
+			M = glm::rotate(M, glm::radians(angle), rotation_vector);
+			M = glm::translate(M, distances.at(selected_obj));
+		}
+	}
+
+	//SCALE
+	if (scale_factor != 1.0)
+	{
+		if (TransformMode == OCS)
+		{
+			M = glm::scale(M, glm::vec3(scale_factor));
+		}
+		else if (TransformMode == WCS)
+		{
+			M = glm::translate(M, -distances.at(selected_obj));
+			M = glm::scale(M, glm::vec3(scale_factor));
+			M = glm::translate(M, distances.at(selected_obj));
+		}
+	}
+
+	objects[selected_obj].M = M;
 }
 
 void generate_and_load_buffers(bool generate, Mesh* mesh)
@@ -982,20 +1177,20 @@ void loadObjFile(string file_path, Mesh* mesh)
 				glm::vec3(tmp_vertices[ic]) - glm::vec3(tmp_vertices[ia])));
 			
 			//Normali ai vertici
-			//tmp_normals[ia] += normal;
-			//tmp_normals[ib] += normal;
-			//tmp_normals[ic] += normal;
+			tmp_normals[ia] += normal;
+			tmp_normals[ib] += normal;
+			tmp_normals[ic] += normal;
 			//Put an index to the normal for all 3 vertex of the face
-			//normalIndices.push_back(ia);
-			//normalIndices.push_back(ib);
-			//normalIndices.push_back(ic);
+			normalIndices.push_back(ia);
+			normalIndices.push_back(ib);
+			normalIndices.push_back(ic);
 
 			// Normali alle facce
-			tmp_normals[i / 3] = normal;
+			//tmp_normals[i / 3] = normal;
 			//Put an index to the normal for all 3 vertex of the face
-			normalIndices.push_back(i / 3);
-			normalIndices.push_back(i / 3);
-			normalIndices.push_back(i / 3);
+			//normalIndices.push_back(i / 3);
+			//normalIndices.push_back(i / 3);
+			//normalIndices.push_back(i / 3);
 		}
 	}
 
@@ -1089,6 +1284,7 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);
 	glutKeyboardFunc(keyboardDown);
+	glutKeyboardUpFunc(keyboardUp);
 	glutMouseFunc(mouseClick);
 	glutMotionFunc(mouseActiveMotion);
 	glutSpecialFunc(special);
