@@ -64,6 +64,11 @@ typedef enum {
 	BRASS,
 	SLATE,
 	AQUAMARINE,
+	GOLD,
+	QUARTZ,
+	PASTEL_PINK,
+	AMETHYST,
+	RADIATION,
 	NO_MATERIAL,
 	NUM_MATERIALS
 } MaterialType;
@@ -83,6 +88,7 @@ typedef enum { // used also as index, don't modify order
 	PASS_THROUGH,
 	WAVE,
 	TOON,
+	PULSING,
 	GLITCH,
 	NUM_SHADERS
 } ShadingType;
@@ -125,7 +131,12 @@ glm::vec3 red_plastic_ambient = { 0.1, 0.0, 0.0 }, red_plastic_diffuse = { 0.6, 
 glm::vec3 brass_ambient = { 0.1, 0.06, 0.015 }, brass_diffuse = { 0.78, 0.57, 0.11 }, brass_specular = { 0.99, 0.91, 0.81 }; GLfloat brass_shininess = 27.8f;
 glm::vec3 emerald_ambient = { 0.0215, 0.04745, 0.0215 }, emerald_diffuse = { 0.07568, 0.61424, 0.07568 }, emerald_specular = { 0.633, 0.727811, 0.633 }; GLfloat emerald_shininess = 78.8f;
 glm::vec3 slate_ambient = { 0.02, 0.02, 0.02 }, slate_diffuse = { 0.1, 0.1, 0.1 }, slate_specular{ 0.4, 0.4, 0.4 }; GLfloat slate_shininess = 1.78125f;
-glm::vec3 aquamarine_ambient = { 0.0, 0.1, 0.06 }, aquamarine_diffuse = { 0.0, 0.50980392f,0.50980392f }, aquamarine_specular = { 0.50196078f,0.50196078f,0.50196078f }; GLfloat aquamarine_shininess = 32.0f;
+glm::vec3 aquamarine_ambient = { 0.0f, 0.1f, 0.1f }; glm::vec3 aquamarine_diffuse = { 0.0f, 0.50980392f, 0.50980392f }; glm::vec3 aquamarine_specular = { 0.50196078f, 0.50196078f, 0.50196078f }; GLfloat aquamarine_shininess = 32.0f;
+glm::vec3 quartz_ambient = { 0.8f, 0.8f, 0.8f }; glm::vec3 quartz_diffuse = { 0.8f, 0.8f, 0.8f }; glm::vec3 quartz_specular = { 1.0f, 1.0f, 1.0f }; GLfloat quartz_shininess = 128.0f;
+glm::vec3 pastel_pink_ambient = { 0.9569f, 0.6431f, 0.7725f }; glm::vec3 pastel_pink_diffuse = { 0.9569f, 0.6431f, 0.7725f }; glm::vec3 pastel_pink_specular = { 0.9922f, 0.8863f, 0.8863f }; GLfloat pastel_pink_shininess = 27.8f;
+glm::vec3 amethyst_ambient = { 0.3f, 0.0f, 0.3f }; glm::vec3 amethyst_diffuse = { 0.4f, 0.2f, 0.6f }; glm::vec3 amethyst_specular = { 0.6f, 0.4f, 0.8f }; GLfloat amethyst_shininess = 32.0f;
+glm::vec3 radiation_ambient = { 0.0f, 0.0f, 0.0f }; glm::vec3 radiation_diffuse = { 0.0f, 1.0f, 0.0f }; glm::vec3 radiation_specular = { 1.0f, 1.0f, 1.0f }; GLfloat radiation_shininess = 128.0f;
+glm::vec3 gold_ambient = { 0.24725f, 0.1995f, 0.0745f }; glm::vec3 gold_diffuse = { 0.75164f, 0.60648f, 0.22648f }; glm::vec3 gold_specular = { 0.628281f, 0.555802f, 0.366065f }; GLfloat gold_shininess = 51.2f;
 
 typedef struct {
 	glm::vec3 position;
@@ -246,12 +257,12 @@ void init_light_object() {
 }
 
 void init_waving_plane() {
-	Mesh sphereS = {};
-	loadObjFile(MeshDir + "GridPlane.obj", &sphereS);
-	generate_and_load_buffers(true, &sphereS);
+	Mesh gridPlane = {};
+	loadObjFile(MeshDir + "GridPlane.obj", &gridPlane);
+	generate_and_load_buffers(true, &gridPlane);
 	// Object Setup use the light shader and a material for color and light behavior
 	Object obj4 = {};
-	obj4.mesh = sphereS;
+	obj4.mesh = gridPlane;
 	obj4.material = MaterialType::AQUAMARINE;
 	obj4.shading = ShadingType::WAVE;
 	//obj4.shading = ShadingType::GOURAUD;// WAVE;
@@ -272,7 +283,7 @@ void init_airplane() {
 	obj4.material = MaterialType::RED_PLASTIC;
 	obj4.shading = ShadingType::TOON;
 	obj4.name = "Airplane";
-	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 2., -6.)), glm::vec3(2., 2., 2.));
 	objects.push_back(obj4);
 	distances.push_back(obj4.M[3]);
 }
@@ -288,7 +299,8 @@ void init_bunny() {
 	obj4.material = MaterialType::RED_PLASTIC;
 	obj4.shading = ShadingType::TOON;
 	obj4.name = "Bunny";
-	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-3., 0., -3.)), glm::vec3(1.5, 1.5, 1.5));
+	obj4.M = glm::rotate(obj4.M, glm::radians(135.0f), glm::vec3(0.0, 1.0, 0.0));
 	objects.push_back(obj4);
 	distances.push_back(obj4.M[3]);
 }
@@ -304,7 +316,9 @@ void init_wgs() {
 	obj4.material = MaterialType::RED_PLASTIC; // NO_MATERIAL;
 	obj4.shading = ShadingType::GOURAUD;
 	obj4.name = "Wolf's Gravestone";
-	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(2., 2., 2.));
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(3., 0., 4.)), glm::vec3(0.5, 0.5, 0.5));
+	obj4.M = glm::rotate(obj4.M, glm::radians(-20.0f), glm::vec3(0.0, 1.0, 0.0));
+	obj4.M = glm::rotate(obj4.M, glm::radians(-5.0f), glm::vec3(0.0, 0.0, 1.0));
 	objects.push_back(obj4);
 	distances.push_back(obj4.M[3]);
 }
@@ -320,7 +334,8 @@ void init_slenderman() {
 	obj4.material = MaterialType::BRASS; // NO_MATERIAL;
 	obj4.shading = ShadingType::GLITCH; // GOURAUD; // TOON;
 	obj4.name = "Slenderman";
-	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0., 0., -2.)), glm::vec3(0.03, 0.03, 0.03));
+	obj4.M = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-2., 0., 3.)), glm::vec3(0.04, 0.04, 0.04));
+	obj4.M = glm::rotate(obj4.M, glm::radians(135.0f), glm::vec3(0.0, 1.0, 0.0));
 	objects.push_back(obj4);
 	distances.push_back(obj4.M[3]);
 }
@@ -333,10 +348,10 @@ void init_sphere_FLAT() {
 	// Object Setup  use the light shader and a material for color and light behavior
 	Object obj3 = {};
 	obj3.mesh = sphereF;
-	obj3.material = MaterialType::EMERALD;
+	obj3.material = MaterialType::BRASS;
 	obj3.shading = ShadingType::PHONG;
 	obj3.name = "Sphere FLAT";
-	obj3.M = glm::translate(glm::mat4(1), glm::vec3(3., 0., -6.));
+	obj3.M = glm::translate(glm::mat4(1), glm::vec3(6., 0., -3.));
 	objects.push_back(obj3);
 	distances.push_back(obj3.M[3]);
 }
@@ -348,10 +363,70 @@ void init_sphere_SMOOTH() {
 	// Object Setup use the light shader and a material for color and light behavior
 	Object obj4 = {};
 	obj4.mesh = sphereS;
-	obj4.material = MaterialType::EMERALD;
+	obj4.material = MaterialType::GOLD;
 	obj4.shading = ShadingType::BLINN;
 	obj4.name = "Sphere SMOOTH";
-	obj4.M = glm::translate(glm::mat4(1), glm::vec3(6., 0., -3.));
+	obj4.M = glm::translate(glm::mat4(1), glm::vec3(3., 0., -6.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_sphere1() {
+	Mesh sphere = {};
+	loadObjFile(MeshDir + "sphere.obj", &sphere);
+	generate_and_load_buffers(true, &sphere);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = sphere;
+	obj4.material = MaterialType::PASTEL_PINK;
+	obj4.shading = ShadingType::BLINN;
+	obj4.name = "Sphere";
+	obj4.M = glm::translate(glm::mat4(1), glm::vec3(3., 0., -3.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_sphere2() {
+	Mesh sphere = {};
+	loadObjFile(MeshDir + "sphere_n_t_flat.obj", &sphere);
+	generate_and_load_buffers(true, &sphere);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = sphere;
+	obj4.material = MaterialType::AMETHYST;
+	obj4.shading = ShadingType::BLINN;
+	obj4.name = "Sphere";
+	obj4.M = glm::translate(glm::mat4(1), glm::vec3(6., 0., -6.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_sphere3() {
+	Mesh sphere = {};
+	loadObjFile(MeshDir + "sphere.obj", &sphere);
+	generate_and_load_buffers(true, &sphere);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = sphere;
+	obj4.material = MaterialType::GOLD;
+	obj4.shading = ShadingType::GOURAUD;
+	obj4.name = "Sphere";
+	obj4.M = glm::translate(glm::mat4(1), glm::vec3(5., 0., 1.));
+	objects.push_back(obj4);
+	distances.push_back(obj4.M[3]);
+}
+
+void init_radiation_cube() {
+	Mesh cube = {};
+	loadObjFile(MeshDir + "cube.obj", &cube);
+	generate_and_load_buffers(true, &cube);
+	// Object Setup use the light shader and a material for color and light behavior
+	Object obj4 = {};
+	obj4.mesh = cube;
+	obj4.material = MaterialType::RADIATION;
+	obj4.shading = ShadingType::PULSING;
+	obj4.name = "Cube";
+	obj4.M = glm::translate(glm::mat4(1), glm::vec3(5., 0., 1.));
 	objects.push_back(obj4);
 	distances.push_back(obj4.M[3]);
 }
@@ -503,7 +578,6 @@ void initShader()
 	glUniform3f(light_uniforms[TOON].light_position_pointer, light.position.x, light.position.y, light.position.z);
 	glUniform4fv(glGetUniformLocation(shaders_IDs[TOON], "Color"), 1, value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0)));
 
-
 	//GLITCH Shader Loading
 	shaders_IDs[GLITCH] = createProgram(ShaderDir + "v_glitch.glsl", ShaderDir + "f_glitch.glsl");
 	//Otteniamo i puntatori alle variabili uniform per poterle utilizzare in seguito
@@ -521,6 +595,28 @@ void initShader()
 	GLint resolutionLocation = glGetUniformLocation(shaders_IDs[GLITCH], "resolution");
 	glUniform2f(resolutionLocation, WindowWidth, WindowHeight);
 
+	//Radiation Shader Loading
+	shaders_IDs[PULSING] = createProgram(ShaderDir + "v_pulsing.glsl", ShaderDir + "f_gouraud.glsl");
+	base_unif.P_Matrix_pointer = glGetUniformLocation(shaders_IDs[PULSING], "P");
+	base_unif.V_Matrix_pointer = glGetUniformLocation(shaders_IDs[PULSING], "V");
+	base_unif.M_Matrix_pointer = glGetUniformLocation(shaders_IDs[PULSING], "M");
+	base_unif.time_delta_pointer = glGetUniformLocation(shaders_IDs[PULSING], "time");
+	base_uniforms[ShadingType::PULSING] = base_unif;
+	light_unif.material_ambient = glGetUniformLocation(shaders_IDs[PULSING], "material.ambient");
+	light_unif.material_diffuse = glGetUniformLocation(shaders_IDs[PULSING], "material.diffuse");
+	light_unif.material_specular = glGetUniformLocation(shaders_IDs[PULSING], "material.specular");
+	light_unif.material_shininess = glGetUniformLocation(shaders_IDs[PULSING], "material.shininess");
+	light_unif.light_position_pointer = glGetUniformLocation(shaders_IDs[PULSING], "light.position");
+	light_unif.light_color_pointer = glGetUniformLocation(shaders_IDs[PULSING], "light.color");
+	light_unif.light_power_pointer = glGetUniformLocation(shaders_IDs[PULSING], "light.power");
+	light_uniforms[ShadingType::PULSING] = light_unif;
+	//Rendiamo attivo lo shader
+	glUseProgram(shaders_IDs[PULSING]);
+	//Shader uniforms initialization
+	glUniform3f(light_uniforms[PULSING].light_position_pointer, light.position.x, light.position.y, light.position.z);
+	glUniform3f(light_uniforms[PULSING].light_color_pointer, light.color.r, light.color.g, light.color.b);
+	glUniform1f(light_uniforms[PULSING].light_power_pointer, light.power);
+
 }
 
 void init() {
@@ -531,7 +627,7 @@ void init() {
 	glEnable(GL_LINE_SMOOTH);
 
 	//Light initialization
-	light.position = { 5.0,5.0,-5.0 };
+	light.position = { 0.0,7.0,-5.0 };	// { 0.0, 10.0, 10.0 }; // { 5.0,5.0,-5.0 };
 	light.color = { 1.0,1.0,1.0 };
 	light.power = 1.f;
 
@@ -567,6 +663,36 @@ void init() {
 	materials[MaterialType::AQUAMARINE].specular = aquamarine_specular;
 	materials[MaterialType::AQUAMARINE].shininess = aquamarine_shininess;
 
+	materials[MaterialType::GOLD].name = "Gold";
+	materials[MaterialType::GOLD].ambient = gold_ambient;
+	materials[MaterialType::GOLD].diffuse = gold_diffuse;
+	materials[MaterialType::GOLD].specular = gold_specular;
+	materials[MaterialType::GOLD].shininess = gold_shininess;
+
+	materials[MaterialType::QUARTZ].name = "Quartz";
+	materials[MaterialType::QUARTZ].ambient = quartz_ambient;
+	materials[MaterialType::QUARTZ].diffuse = quartz_diffuse;
+	materials[MaterialType::QUARTZ].specular = quartz_specular;
+	materials[MaterialType::QUARTZ].shininess = quartz_shininess;
+	
+	materials[MaterialType::PASTEL_PINK].name = "Pastel Pink";
+	materials[MaterialType::PASTEL_PINK].ambient = pastel_pink_ambient;
+	materials[MaterialType::PASTEL_PINK].diffuse = pastel_pink_diffuse;
+	materials[MaterialType::PASTEL_PINK].specular = pastel_pink_specular;
+	materials[MaterialType::PASTEL_PINK].shininess = pastel_pink_shininess;
+
+	materials[MaterialType::AMETHYST].name = "Amethyst";
+	materials[MaterialType::AMETHYST].ambient = amethyst_ambient;
+	materials[MaterialType::AMETHYST].diffuse = amethyst_diffuse;
+	materials[MaterialType::AMETHYST].specular = amethyst_specular;
+	materials[MaterialType::AMETHYST].shininess = amethyst_shininess;
+
+	materials[MaterialType::RADIATION].name = "Radiation";
+	materials[MaterialType::RADIATION].ambient = radiation_ambient;
+	materials[MaterialType::RADIATION].diffuse = radiation_diffuse;
+	materials[MaterialType::RADIATION].specular = radiation_specular;
+	materials[MaterialType::RADIATION].shininess = radiation_shininess;
+
 	materials[MaterialType::NO_MATERIAL].name = "NO_MATERIAL";
 	materials[MaterialType::NO_MATERIAL].ambient = glm::vec3(1, 1, 1);
 	materials[MaterialType::NO_MATERIAL].diffuse = glm::vec3(0, 0, 0);
@@ -592,6 +718,13 @@ void init() {
 
 	// SMOOTH SPHERE (vertex normals)  uses a shader with lighting
 	init_sphere_SMOOTH();
+
+	init_sphere1();
+
+	init_sphere2();
+	//init_sphere3();
+
+	init_radiation_cube();
 
 	//Reference point of the position of the light
 	init_light_object();
@@ -674,6 +807,18 @@ void drawScene() {
 			glUniform3fv(light_uniforms[WAVE].material_diffuse, 1, glm::value_ptr(materials[objects[i].material].diffuse));
 			glUniform3fv(light_uniforms[WAVE].material_specular, 1, glm::value_ptr(materials[objects[i].material].specular));
 			glUniform1f(light_uniforms[WAVE].material_shininess, materials[objects[i].material].shininess);
+			break;
+		case ShadingType::PULSING:
+			glUseProgram(shaders_IDs[PULSING]);
+			// Caricamento matrice trasformazione del modello
+			glUniformMatrix4fv(base_uniforms[PULSING].M_Matrix_pointer, 1, GL_FALSE, value_ptr(objects[i].M));
+			// Time setting
+			glUniform1f(base_uniforms[PULSING].time_delta_pointer, clock());
+			// Material loading
+			glUniform3fv(light_uniforms[PULSING].material_ambient, 1, glm::value_ptr(materials[objects[i].material].ambient));
+			glUniform3fv(light_uniforms[PULSING].material_diffuse, 1, glm::value_ptr(materials[objects[i].material].diffuse));
+			glUniform3fv(light_uniforms[PULSING].material_specular, 1, glm::value_ptr(materials[objects[i].material].specular));
+			glUniform1f(light_uniforms[PULSING].material_shininess, materials[objects[i].material].shininess);
 			break;
 		case ShadingType::TOON:
 			glUseProgram(shaders_IDs[TOON]);
@@ -946,6 +1091,11 @@ void buildOpenGLMenu()
 	glutAddMenuEntry(materials[MaterialType::BRASS].name.c_str(), MaterialType::BRASS);
 	glutAddMenuEntry(materials[MaterialType::SLATE].name.c_str(), MaterialType::SLATE);
 	glutAddMenuEntry(materials[MaterialType::AQUAMARINE].name.c_str(), MaterialType::AQUAMARINE);
+	glutAddMenuEntry(materials[MaterialType::GOLD].name.c_str(), MaterialType::GOLD);
+	glutAddMenuEntry(materials[MaterialType::QUARTZ].name.c_str(), MaterialType::QUARTZ);
+	glutAddMenuEntry(materials[MaterialType::PASTEL_PINK].name.c_str(), MaterialType::PASTEL_PINK);
+	glutAddMenuEntry(materials[MaterialType::AMETHYST].name.c_str(), MaterialType::AMETHYST);
+	glutAddMenuEntry("Radium", MaterialType::RADIATION);
 
 	glutCreateMenu(main_menu_func); // richiama main_menu_func() alla selezione di una voce menu
 	glutAddMenuEntry("Opzioni", -1); //-1 significa che non si vuole gestire questa riga
